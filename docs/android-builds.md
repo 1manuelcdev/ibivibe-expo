@@ -4,7 +4,7 @@ Este projeto usa builds locais para iterar rápido com o telefone conectado.
 
 ## Desenvolvimento local
 
-### `pnpm android:device`
+### `pnpm android`
 
 Executa `expo run:android --device`. Escolha o aparelho conectado por USB; o
 Expo sincroniza o projeto Android quando necessário, compila uma development
@@ -13,11 +13,6 @@ build debug, instala-a e a abre no dispositivo.
 Use na primeira instalação local e sempre que houver alteração nativa, como
 `app.json`, permissões, deep links, plugins Expo ou dependências nativas.
 
-### `pnpm android`
-
-Executa `expo run:android`. É a alternativa sem seleção explícita de aparelho:
-o Expo usa o dispositivo/emulador Android disponível.
-
 ### `pnpm prebuild:android`
 
 Executa `expo prebuild --platform android`. Regenera/sincroniza a pasta
@@ -25,7 +20,7 @@ Executa `expo prebuild --platform android`. Regenera/sincroniza a pasta
 chamado automaticamente por `android:device`; execute manualmente apenas para
 inspecionar ou atualizar os arquivos nativos.
 
-### `pnpm build:android:apk`
+### `pnpm build:android`
 
 Executa o Gradle `assembleDebug` e cria um APK local em:
 
@@ -37,7 +32,7 @@ Use quando precisar do arquivo APK para instalar, arquivar ou compartilhar
 manualmente. Antes, execute `pnpm prebuild:android` caso a configuração nativa
 tenha mudado.
 
-### `pnpm install:android:apk`
+### `pnpm install:android`
 
 Instala ou atualiza o APK debug no telefone conectado usando ADB. O `-r`
 preserva os dados do app quando a assinatura e o identificador do pacote são
@@ -58,6 +53,6 @@ devem aparecer por Fast Refresh.
 ## Fluxo recomendado
 
 1. Conecte o Android via USB com depuração USB ativada.
-2. Execute `pnpm android:device` uma vez.
+2. Execute `pnpm android` uma vez.
 3. No dia a dia, execute `pnpm start -- --dev-client`.
-4. Reexecute `pnpm android:device` após mudanças nativas.
+4. Reexecute `pnpm android` após mudanças nativas.
