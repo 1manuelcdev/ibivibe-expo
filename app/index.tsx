@@ -22,7 +22,7 @@ export default function Index() {
   }
 
   if (status === 'needs-verification') return <Redirect href="/(auth)/verify-email" />;
-  if (status === 'needs-onboarding') return <Redirect href="/(onboarding)/profile-select" />;
+  if (status === 'needs-onboarding') return <Redirect href="/(onboarding)" />;
   if (status === 'authenticated') return <Redirect href="/(app)/home" />;
   return <Redirect href="/(public)/welcome" />;
 }
