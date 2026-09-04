@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, type Control } from 'react-hook-form';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { TextField } from '@/components/TextField';
 import type { RegisterFormValues } from '@/features/auth/models/auth-schemas';
 import { useRegisterViewModel } from '@/features/auth/viewmodels/useRegisterViewModel';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -203,7 +204,7 @@ type FieldProps = {
   label: string;
   name: Exclude<keyof Values, 'type'>;
   onValueChange?: (value: string) => void;
-} & Omit<React.ComponentProps<typeof TextInput>, 'onChangeText' | 'value'>;
+} & Omit<React.ComponentProps<typeof TextField>, 'error' | 'label' | 'onChangeText' | 'value'>;
 
 function FormField({ control, label, name, onValueChange, ...inputProps }: FieldProps) {
   return (
@@ -211,23 +212,18 @@ function FormField({ control, label, name, onValueChange, ...inputProps }: Field
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>
-            {label} <Text style={styles.required}>*</Text>
-          </Text>
-          <TextInput
+        <TextField
             {...inputProps}
+            error={fieldState.error?.message}
+            label={label}
             onBlur={field.onBlur}
             onChangeText={(value) => {
               field.onChange(value);
               onValueChange?.(value);
             }}
-            placeholderTextColor={colors.mutedForeground}
-            style={[styles.input, fieldState.error && styles.inputError]}
+            required
             value={typeof field.value === 'string' ? field.value : ''}
           />
-          {fieldState.error?.message ? <Text style={styles.error}>{fieldState.error.message}</Text> : null}
-        </View>
       )}
     />
   );
@@ -285,22 +281,6 @@ const styles = {
   eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
   title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 },
   fields: { gap: 16 },
-  fieldGroup: { gap: 8 },
-  label: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
-  required: { color: '#EF4444' },
-  input: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 32,
-    borderWidth: 1,
-    color: colors.foreground,
-    fontFamily: 'DMSans-Medium',
-    fontSize: 16,
-    height: 48,
-    paddingHorizontal: spacing.control,
-  },
-  inputError: { borderColor: '#EF4444' },
-  error: { color: '#FCA5A5', fontFamily: 'DMSans-Regular', fontSize: 12 },
   footer: { backgroundColor: colors.background, gap: 20, paddingBottom: 24, paddingHorizontal: spacing.screen, paddingTop: 16 },
   submit: {
     alignItems: 'center' as const,

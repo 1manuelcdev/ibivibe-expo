@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { TextField } from '@/components/TextField';
 import { useRecentSearchStore } from '@/features/search/stores/recent-search-store';
 import { useSearchViewModel } from '@/features/search/viewmodels/useSearchViewModel';
 import { colors } from '@/theme/tokens';
@@ -41,12 +42,12 @@ export function ExpandedSearchScreen() {
         <Pressable accessibilityLabel="Voltar" onPress={() => router.back()}>
           <Ionicons color={colors.foreground} name="arrow-back" size={24} />
         </Pressable>
-        <TextInput
+        <TextField
           autoFocus
+          containerStyle={styles.searchInputContainer}
+          inputStyle={styles.input}
           onChangeText={setQuery}
           placeholder="O que vamos fazer hoje na Ibiapaba?"
-          placeholderTextColor={colors.mutedForeground}
-          style={styles.input}
           value={query}
         />
         {query.length > 0 && (
@@ -192,7 +193,11 @@ const styles = {
     gap: 12,
     padding: 16,
   },
+  searchInputContainer: { flex: 1 },
   input: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderRadius: 12,
     color: colors.foreground,
     flex: 1,
     fontFamily: 'DMSans-Regular',

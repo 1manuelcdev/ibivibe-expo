@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Controller } from 'react-hook-form';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
+import { TextField } from '@/components/TextField';
 import { useLoginViewModel } from '@/features/auth/viewmodels/useLoginViewModel';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -29,7 +30,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
           control={control}
           name="email"
           render={({ field: { onChange, onBlur, value }, fieldState }) => (
-            <Field
+            <TextField
               autoCapitalize="none"
               autoComplete="email"
               error={fieldState.error?.message}
@@ -46,7 +47,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
           control={control}
           name="password"
           render={({ field: { onChange, onBlur, value }, fieldState }) => (
-            <Field
+            <TextField
               autoCapitalize="none"
               autoComplete="password"
               error={fieldState.error?.message}
@@ -86,22 +87,6 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
   );
 }
 
-type FieldProps = React.ComponentProps<typeof TextInput> & { error?: string; label: string };
-
-function Field({ error, label, ...props }: FieldProps) {
-  return (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        placeholderTextColor={colors.mutedForeground}
-        style={[styles.input, error && styles.inputError]}
-        {...props}
-      />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
-  );
-}
-
 const styles = {
   container: { flex: 1, gap: spacing.section, paddingHorizontal: spacing.screen, paddingTop: 32 },
   heading: { gap: 8 },
@@ -109,21 +94,6 @@ const styles = {
   title: { color: colors.foreground, fontFamily: 'DMSans-Bold', fontSize: 28, lineHeight: 34 },
   subtitle: { color: '#D4D4D8', fontFamily: 'DMSans-Regular', fontSize: 15, lineHeight: 21 },
   fields: { gap: 18 },
-  fieldGroup: { gap: 8 },
-  label: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
-  input: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    color: colors.foreground,
-    fontFamily: 'DMSans-Regular',
-    fontSize: 16,
-    height: 52,
-    paddingHorizontal: spacing.control,
-  },
-  inputError: { borderColor: '#EF4444' },
-  error: { color: '#FCA5A5', fontFamily: 'DMSans-Regular', fontSize: 12 },
   forgotPassword: {
     color: colors.primary,
     fontFamily: 'DMSans-Medium',

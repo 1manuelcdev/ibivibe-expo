@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getApiErrorMessage } from '@/api/client';
+import { TextField } from '@/components/TextField';
 import { authApi } from '@/features/auth/auth-api';
 import { useSessionStore } from '@/stores/session-store';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -169,14 +170,14 @@ function VerificationDialog({
         <View style={styles.dialog}>
           <Text style={styles.dialogTitle}>{title}</Text>
           <Text style={styles.dialogDescription}>{description}</Text>
-          <TextInput
+          <TextField
             autoCapitalize="none"
             autoCorrect={false}
+            containerStyle={styles.inputContainer}
+            inputStyle={styles.input}
             keyboardType={isEmail ? 'email-address' : 'default'}
             onChangeText={setValue}
             placeholder={isEmail ? 'voce@email.com' : 'Cole o token aqui'}
-            placeholderTextColor={colors.mutedForeground}
-            style={styles.input}
             value={value}
           />
           <View style={styles.dialogActions}>
@@ -275,17 +276,7 @@ const styles = {
     lineHeight: 20,
     marginTop: 8,
   },
-  input: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    color: colors.foreground,
-    fontFamily: 'DMSans-Regular',
-    fontSize: 16,
-    height: 52,
-    marginTop: 18,
-    paddingHorizontal: 14,
-  },
+  inputContainer: { marginTop: 18 },
+  input: { fontFamily: 'DMSans-Regular', height: 52, paddingHorizontal: 14 },
   dialogActions: { flexDirection: 'row' as const, justifyContent: 'flex-end' as const, marginTop: 12 },
 } as const;

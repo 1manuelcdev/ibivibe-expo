@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TextField } from '@/components/TextField';
 import { authApi } from '@/features/auth/auth-api';
 import { onboardingApi } from '@/features/onboarding/onboarding-api';
 import type { OnboardingCity } from '@/features/onboarding/models/onboarding-types';
@@ -65,7 +66,7 @@ export function BusinessDataScreen() {
         </View>
         <View style={styles.form}>
           <Field label="Nome" required>
-            <TextInput onChangeText={setName} placeholder="Nome fantasia" placeholderTextColor={colors.mutedForeground} style={styles.input} value={name} />
+            <TextField onChangeText={setName} placeholder="Nome fantasia" value={name} />
           </Field>
           <View style={styles.field}>
             <Text style={styles.label}>Localização <Text style={styles.required}>*</Text></Text>
@@ -75,7 +76,7 @@ export function BusinessDataScreen() {
             {hasBranches ? <PickerField label="Cidades com filiais" value={branchCities.length ? branchCities.map((city) => city.name).join(', ') : undefined} onPress={() => setPicker('branches')} /> : null}
           </View>
           <Field label="CNPJ" required>
-            <TextInput keyboardType="number-pad" maxLength={18} onChangeText={(value) => setCnpj(formatCnpj(value))} placeholder="00.000.000/0000-00" placeholderTextColor={colors.mutedForeground} style={styles.input} value={cnpj} />
+            <TextField keyboardType="number-pad" maxLength={18} onChangeText={(value) => setCnpj(formatCnpj(value))} placeholder="00.000.000/0000-00" value={cnpj} />
           </Field>
           {cities.isLoading ? <ActivityIndicator color={colors.primary} /> : null}
           {cities.isError ? <Text style={styles.error}>Não foi possível carregar as cidades.</Text> : null}
@@ -137,7 +138,6 @@ const styles = {
   field: { gap: 8 },
   label: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   required: { color: '#EF4444' },
-  input: { backgroundColor: '#27272A', borderColor: colors.border, borderRadius: 24, borderWidth: 1, color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16, height: 48, paddingHorizontal: 16 },
   radioRow: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 10, minHeight: 28 },
   radio: { alignItems: 'center' as const, backgroundColor: '#27272A', borderColor: colors.border, borderRadius: 12, borderWidth: 1, height: 16, justifyContent: 'center' as const, width: 16 },
   radioSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
