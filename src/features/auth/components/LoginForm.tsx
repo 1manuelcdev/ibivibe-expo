@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Controller } from 'react-hook-form';
@@ -20,92 +21,101 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.heading}>
-        <Text style={styles.eyebrow}>IbiVibe</Text>
-        <Text style={styles.title}>Boas-vindas de volta</Text>
-        <Text style={styles.subtitle}>Entre para descobrir o que acontece na Ibiapaba.</Text>
-      </View>
-
-      <View style={styles.fields}>
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value }, fieldState }) => (
-            <TextField
-              autoCapitalize="none"
-              autoComplete="email"
-              error={fieldState.error?.message}
-              keyboardType="email-address"
-              label="E-mail"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              onSubmitEditing={() => passwordInput.current?.focus()}
-              placeholder="voce@email.com"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              value={value}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value }, fieldState }) => (
-            <TextField
-              autoCapitalize="none"
-              autoComplete="password"
-              error={fieldState.error?.message}
-              label="Senha"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              onSubmitEditing={submit}
-              placeholder="Sua senha"
-              ref={passwordInput}
-              returnKeyType="done"
-              secureTextEntry
-              value={value}
-            />
-          )}
-        />
-        <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
-          <Text style={styles.forgotPassword}>Esqueci minha senha</Text>
+      <View style={styles.header}>
+        <Pressable accessibilityLabel="Voltar" hitSlop={12} onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons color={colors.foreground} name="arrow-back" size={24} />
         </Pressable>
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={formState.isSubmitting}
-        onPress={submit}
-        style={({ pressed }) => [
-          styles.submit,
-          (pressed || formState.isSubmitting) && styles.pressed,
-        ]}
-      >
-        <Text style={styles.submitLabel}>{formState.isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
-      </Pressable>
+      <View style={styles.main}>
+        <View style={styles.heading}>
+          <Text style={styles.eyebrow}>Bem vindo(a) de volta!</Text>
+          <Text style={styles.title}>Entrar</Text>
+        </View>
 
-      <View style={styles.registerRow}>
-        <Text style={styles.registerText}>Ainda não tem uma conta?</Text>
-        <Pressable onPress={() => router.push('/(auth)/register')}>
-          <Text style={styles.registerLink}>Criar conta</Text>
-        </Pressable>
+        <View style={styles.form}>
+          <View style={styles.inputs}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                <TextField
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  error={fieldState.error?.message}
+                  inputStyle={styles.input}
+                  keyboardType="email-address"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  onSubmitEditing={() => passwordInput.current?.focus()}
+                  placeholder="Email"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  value={value}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                <TextField
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  error={fieldState.error?.message}
+                  inputStyle={styles.input}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  onSubmitEditing={submit}
+                  placeholder="Senha"
+                  ref={passwordInput}
+                  returnKeyType="done"
+                  secureTextEntry
+                  value={value}
+                />
+              )}
+            />
+            <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotPassword}>
+              <Text style={styles.forgotPasswordLabel}>Esqueci minha senha</Text>
+            </Pressable>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={formState.isSubmitting}
+            onPress={submit}
+            style={({ pressed }) => [
+              styles.submit,
+              (pressed || formState.isSubmitting) && styles.pressed,
+            ]}
+          >
+            <Text style={styles.submitLabel}>{formState.isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/(auth)/register')} style={styles.registerButton}>
+            <Text style={styles.registerLabel}>Ainda não tenho conta</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = {
-  container: { flex: 1, gap: spacing.section, paddingHorizontal: spacing.screen, paddingTop: 32 },
+  container: { flex: 1, paddingHorizontal: spacing.screen, paddingTop: 16 },
+  header: { height: 40, justifyContent: 'center' as const },
+  backButton: { alignItems: 'center' as const, height: 40, justifyContent: 'center' as const, width: 40 },
+  main: { gap: 24, paddingTop: 24 },
   heading: { gap: 8 },
-  eyebrow: { color: colors.primary, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
-  title: { color: colors.foreground, fontFamily: 'DMSans-Bold', fontSize: 28, lineHeight: 34 },
-  subtitle: { color: '#D4D4D8', fontFamily: 'DMSans-Regular', fontSize: 15, lineHeight: 21 },
-  fields: { gap: 18 },
-  forgotPassword: {
-    color: colors.primary,
+  eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
+  title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 },
+  form: { gap: 24 },
+  inputs: { gap: 12 },
+  input: { height: 40 },
+  forgotPassword: { alignSelf: 'flex-start' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 },
+  forgotPasswordLabel: {
+    color: colors.foreground,
     fontFamily: 'DMSans-Medium',
     fontSize: 14,
-    textAlign: 'right' as const,
   },
   submit: {
     alignItems: 'center' as const,
@@ -115,13 +125,7 @@ const styles = {
     justifyContent: 'center' as const,
   },
   submitLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
-  registerRow: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 4,
-    justifyContent: 'center' as const,
-  },
-  registerText: { color: '#D4D4D8', fontFamily: 'DMSans-Regular', fontSize: 14 },
-  registerLink: { color: colors.primary, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
+  registerButton: { alignItems: 'center' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 },
+  registerLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
   pressed: { opacity: 0.75 },
 } as const;
