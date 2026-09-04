@@ -1,5 +1,7 @@
 import { Stack } from 'expo-router';
 
+import { colors } from '@/theme/tokens';
+
 export default function SearchLayout() {
-  return <Stack screenOptions={{ animation: 'none', headerShown: false }} />;
+  return <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background }, headerShown: false }} />;
 }
