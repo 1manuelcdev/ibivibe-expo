@@ -40,24 +40,26 @@ export function RegisterForm() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" hitSlop={12} onPress={back} style={styles.backButton}>
-          <Ionicons color={colors.foreground} name="arrow-back" size={24} />
-        </Pressable>
-        <Text style={styles.progress}>Passo {step + 1} de 3</Text>
-      </View>
+    <View style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
+      >
+        <View style={styles.header}>
+          <Pressable accessibilityLabel="Voltar" hitSlop={12} onPress={back} style={styles.backButton}>
+            <Ionicons color={colors.foreground} name="arrow-back" size={24} />
+          </Pressable>
+          <Text style={styles.progress}>Passo {step + 1} de 3</Text>
+        </View>
 
-      {step === 0 ? <CredentialsStep control={control} /> : null}
-      {step === 1 ? (
-        <BasicInfoStep control={control} onNameChange={(name) => setValue('display_name', name)} />
-      ) : null}
-      {step === 2 ? <AccountTypeStep control={control} /> : null}
-
+        {step === 0 ? <CredentialsStep control={control} /> : null}
+        {step === 1 ? (
+          <BasicInfoStep control={control} onNameChange={(name) => setValue('display_name', name)} />
+        ) : null}
+        {step === 2 ? <AccountTypeStep control={control} /> : null}
+      </ScrollView>
       <View style={styles.footer}>
         <Pressable
           accessibilityRole="button"
@@ -81,7 +83,7 @@ export function RegisterForm() {
           </View>
         ) : null}
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -264,10 +266,9 @@ function AccountTypeCard({
 }
 
 const styles = {
+  screen: { flex: 1 },
+  scroll: { flex: 1 },
   content: {
-    flexGrow: 1,
-    minHeight: '100%' as const,
-    paddingBottom: 24,
     paddingHorizontal: spacing.screen,
     paddingTop: 16,
   },
@@ -300,7 +301,7 @@ const styles = {
   },
   inputError: { borderColor: '#EF4444' },
   error: { color: '#FCA5A5', fontFamily: 'DMSans-Regular', fontSize: 12 },
-  footer: { gap: 20, marginTop: 'auto' as const, paddingTop: 24 },
+  footer: { backgroundColor: colors.background, gap: 20, paddingBottom: 24, paddingHorizontal: spacing.screen, paddingTop: 16 },
   submit: {
     alignItems: 'center' as const,
     backgroundColor: colors.primary,
