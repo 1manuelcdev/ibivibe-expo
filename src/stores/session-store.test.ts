@@ -4,9 +4,22 @@ import type { Account } from '@/types/auth';
 
 const mocks = vi.hoisted(() => ({
   clear: vi.fn(),
+  getCompletionState: vi.fn(),
   get: vi.fn(),
   getMe: vi.fn(),
+  login: vi.fn(),
+  markCompleted: vi.fn(),
+  markPending: vi.fn(),
+  register: vi.fn(),
   set: vi.fn(),
+}));
+
+vi.mock('@/storage/onboarding-storage', () => ({
+  onboardingStorage: {
+    getCompletionState: mocks.getCompletionState,
+    markCompleted: mocks.markCompleted,
+    markPending: mocks.markPending,
+  },
 }));
 
 vi.mock('@/storage/token-storage', () => ({
@@ -20,8 +33,8 @@ vi.mock('@/storage/token-storage', () => ({
 vi.mock('@/features/auth/auth-api', () => ({
   authApi: {
     getMe: mocks.getMe,
-    login: vi.fn(),
-    register: vi.fn(),
+    login: mocks.login,
+    register: mocks.register,
   },
 }));
 
@@ -36,6 +49,7 @@ const verifiedAccount: Account = {
 describe('session store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getCompletionState.mockResolvedValue(null);
     useSessionStore.setState({ account: null, status: 'boot' });
   });
 
@@ -72,6 +86,53 @@ describe('session store', () => {
     expect(mocks.set).toHaveBeenCalledWith('new-access', 'new-refresh');
     expect(useSessionStore.getState()).toMatchObject({
       account,
+      status: 'needs-onboarding',
+    });
+  });
+
+  it('marks a newly registered account as pending before it can reach the home screen', async () => {
+    mocks.register.mockResolvedValue({
+      access_token: 'new-access',
+      account: verifiedAccount,
+      refresh_token: 'new-refresh',
+    });
+
+    await useSessionStore.getState().register({
+      display_name: 'Ana',
+      email: verifiedAccount.email,
+      name: 'Ana da Silva',
+      password: 'password123',
+      password_confirm: 'password123',
+      slug: 'ana-da-silva',
+    });
+
+    expect(mocks.markPending).toHaveBeenCalledWith(verifiedAccount.id);
+    expect(useSessionStore.getState().status).toBe('needs-onboarding');
+  });
+
+  it('marks onboarding complete only for the active account', async () => {
+    useSessionStore.setState({ account: verifiedAccount, status: 'needs-onboarding' });
+
+    await useSessionStore.getState().completeOnboarding(verifiedAccount);
+
+    expect(mocks.markCompleted).toHaveBeenCalledWith(verifiedAccount.id);
+    expect(useSessionStore.getState()).toMatchObject({
+      account: { id: verifiedAccount.id, needs_onboarding: false },
+      status: 'authenticated',
+    });
+  });
+
+  it('continues to onboarding after email verification for a newly registered account', async () => {
+    useSessionStore.setState({
+      account: { ...verifiedAccount, is_verified: false, needs_onboarding: true },
+      status: 'needs-verification',
+    });
+    mocks.getCompletionState.mockResolvedValue(false);
+
+    await useSessionStore.getState().completeEmailVerification();
+
+    expect(useSessionStore.getState()).toMatchObject({
+      account: { id: verifiedAccount.id, is_verified: true },
       status: 'needs-onboarding',
     });
   });

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { authApi } from '@/features/auth/auth-api';
+import { onboardingStorage } from '@/storage/onboarding-storage';
 import { tokenStorage } from '@/storage/token-storage';
 import type { Account, AuthResponse, LoginInput, RegisterInput } from '@/types/auth';
 
@@ -18,14 +19,17 @@ type SessionState = {
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   setAuthResponse: (response: AuthResponse) => Promise<void>;
+  completeEmailVerification: () => Promise<void>;
+  completeOnboarding: (account: Account) => Promise<void>;
+  updateAccount: (account: Account) => void;
   logout: () => Promise<void>;
 };
 
-function getStatus(account: Account): SessionStatus {
+function getStatus(account: Account, hasPendingOnboarding = false): SessionStatus {
   const isVerified = account.is_verified ?? account.email_verified ?? false;
 
   if (!isVerified) return 'needs-verification';
-  if (account.needs_onboarding === true) return 'needs-onboarding';
+  if (account.needs_onboarding === true || hasPendingOnboarding) return 'needs-onboarding';
   return 'authenticated';
 }
 
@@ -43,7 +47,8 @@ export const useSessionStore = create<SessionState>((set) => ({
 
     try {
       const account = await authApi.getMe();
-      set({ status: getStatus(account), account });
+      const hasPendingOnboarding = (await onboardingStorage.getCompletionState(account.id)) === false;
+      set({ status: getStatus(account, hasPendingOnboarding), account });
     } catch {
       await tokenStorage.clear();
       set({ status: 'anonymous', account: null });
@@ -57,12 +62,34 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   register: async (input) => {
     const response = await authApi.register(input);
-    await useSessionStore.getState().setAuthResponse(response);
+    await onboardingStorage.markPending(response.account.id);
+    await useSessionStore
+      .getState()
+      .setAuthResponse({ ...response, account: { ...response.account, needs_onboarding: true } });
   },
 
   setAuthResponse: async (response) => {
     await tokenStorage.set(response.access_token, response.refresh_token);
     set({ status: getStatus(response.account), account: response.account });
+  },
+
+  completeEmailVerification: async () => {
+    const account = useSessionStore.getState().account;
+
+    if (!account) return;
+
+    const verifiedAccount = { ...account, email_verified: true, is_verified: true };
+    const hasPendingOnboarding = (await onboardingStorage.getCompletionState(account.id)) === false;
+    set({ account: verifiedAccount, status: getStatus(verifiedAccount, hasPendingOnboarding) });
+  },
+
+  completeOnboarding: async (account) => {
+    await onboardingStorage.markCompleted(account.id);
+    set({ account: { ...account, needs_onboarding: false }, status: 'authenticated' });
+  },
+
+  updateAccount: (account) => {
+    set((state) => (state.account?.id === account.id ? { account } : state));
   },
 
   logout: async () => {

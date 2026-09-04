@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ibivibe-expo",
-    "slug": "ibivibe-expo",
+    "slug": "ibivibe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,21 +11,60 @@
       "backgroundColor": "#0A0A0A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "associatedDomains": ["applinks:links.updates.ibivibe.com.br"],
+      "bundleIdentifier": "com.manuelcdev.ibivibe",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "backgroundColor": "#0A0A0A",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "https",
+              "host": "links.updates.ibivibe.com.br",
+              "pathPrefix": "/CL0/"
+            }
+          ]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.manuelcdev.ibivibe"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#0A0A0A",
+      "barStyle": "light-content"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-sqlite", "expo-font"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-font"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "85c150cf-72b4-4191-b20b-88028fd9ce71"
+      }
+    },
+    "owner": "manuelcdev-team"
   }
 }

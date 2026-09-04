@@ -39,12 +39,6 @@ export function WelcomeScreen() {
           </Text>
         </View>
 
-        <View style={styles.indicator}>
-          <View style={[styles.dot, styles.activeDot]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-        </View>
-
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
@@ -118,20 +112,6 @@ const styles = {
     fontSize: 14,
     lineHeight: 18,
     textAlign: 'center' as const,
-  },
-  indicator: {
-    flexDirection: 'row' as const,
-    gap: 12,
-    justifyContent: 'center' as const,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 50,
-    backgroundColor: colors.border,
-  },
-  activeDot: {
-    backgroundColor: colors.foreground,
   },
   actions: {
     gap: 16,
