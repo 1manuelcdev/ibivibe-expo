@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Image, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Text, useWindowDimensions, View } from 'react-native';
 
 import { colors, radius, spacing } from '@/theme/tokens';
+import { Button } from '@/components/Button';
 
 const welcomeImages = {
   cave: require('../../../../assets/welcome-cave.jpeg'),
@@ -40,20 +41,17 @@ export function WelcomeScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
+          <Button
             onPress={() => router.push('/(auth)/login')}
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
           >
-            <Text style={styles.primaryLabel}>Entrar</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
+            Entrar
+          </Button>
+          <Button
             onPress={() => router.push('/(auth)/register')}
-            style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
+            variant="ghost"
           >
-            <Text style={styles.ghostLabel}>Criar conta</Text>
-          </Pressable>
+            Criar conta
+          </Button>
         </View>
       </View>
     </View>
@@ -115,31 +113,5 @@ const styles = {
   },
   actions: {
     gap: 16,
-  },
-  primaryButton: {
-    alignItems: 'center' as const,
-    backgroundColor: colors.primary,
-    borderRadius: radius.button,
-    height: 48,
-    justifyContent: 'center' as const,
-  },
-  ghostButton: {
-    alignItems: 'center' as const,
-    borderRadius: radius.button,
-    height: 48,
-    justifyContent: 'center' as const,
-  },
-  primaryLabel: {
-    color: colors.primaryForeground,
-    fontFamily: 'DMSans-SemiBold',
-    fontSize: 14,
-  },
-  ghostLabel: {
-    color: colors.foreground,
-    fontFamily: 'DMSans-Medium',
-    fontSize: 14,
-  },
-  pressed: {
-    opacity: 0.78,
   },
 } as const;

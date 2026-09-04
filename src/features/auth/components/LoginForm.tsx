@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 
+import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { useLoginViewModel } from '@/features/auth/viewmodels/useLoginViewModel';
 import { colors } from '@/theme/tokens';
@@ -80,14 +81,12 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
             </Pressable>
           </View>
 
-          <Pressable
-            accessibilityRole="button"
+          <Button
             disabled={formState.isSubmitting}
             onPress={submit}
-            className="h-12 items-center justify-center rounded-button bg-primary active:opacity-75"
           >
-            <Text className="font-dm-semibold text-sm text-primary-foreground">{formState.isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
-          </Pressable>
+            {formState.isSubmitting ? 'Entrando...' : 'Entrar'}
+          </Button>
           <Pressable className="h-8 items-center justify-center px-2" onPress={() => router.push('/(auth)/register')}>
             <Text className="font-dm-medium text-sm text-foreground">Ainda não tenho conta</Text>
           </Pressable>

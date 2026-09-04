@@ -5,9 +5,10 @@ import { Controller, type Control } from 'react-hook-form';
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { TextField } from '@/components/TextField';
+import { Button } from '@/components/Button';
 import type { RegisterFormValues } from '@/features/auth/models/auth-schemas';
 import { useRegisterViewModel } from '@/features/auth/viewmodels/useRegisterViewModel';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 
 type Values = RegisterFormValues;
 type Step = 0 | 1 | 2;
@@ -77,19 +78,12 @@ export function RegisterForm() {
         {step === 2 ? <AccountTypeStep control={control} /> : null}
       </ScrollView>
       <View style={styles.footer}>
-        <Pressable
-          accessibilityRole="button"
+        <Button
           disabled={formState.isSubmitting}
           onPress={() => void next()}
-          style={({ pressed }) => [
-            styles.submit,
-            (pressed || formState.isSubmitting) && styles.pressed,
-          ]}
         >
-          <Text style={styles.submitLabel}>
-            {formState.isSubmitting ? 'Criando conta...' : step === 2 ? 'Criar conta' : 'Continuar'}
-          </Text>
-        </Pressable>
+          {formState.isSubmitting ? 'Criando conta...' : step === 2 ? 'Criar conta' : 'Continuar'}
+        </Button>
         {step === 0 ? (
           <View style={styles.loginRow}>
             <Text style={styles.loginText}>Já tem uma conta?</Text>
@@ -338,14 +332,6 @@ const styles = {
   title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 },
   fields: { gap: 16 },
   footer: { backgroundColor: colors.background, gap: 20, paddingBottom: 24, paddingHorizontal: spacing.screen, paddingTop: 16 },
-  submit: {
-    alignItems: 'center' as const,
-    backgroundColor: colors.primary,
-    borderRadius: radius.button,
-    height: 48,
-    justifyContent: 'center' as const,
-  },
-  submitLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
   loginRow: {
     alignItems: 'center' as const,
     flexDirection: 'row' as const,
