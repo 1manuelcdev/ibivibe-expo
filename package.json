@@ -7,6 +7,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "build:android:dev": "eas build --platform android --profile development",
+    "build:android:prod": "eas build --platform android --profile production",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "vitest run",
