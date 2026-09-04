@@ -4,6 +4,7 @@ export const colors = {
   primary: '#9FFF8B',
   primaryForeground: '#000000',
   border: '#4D4D56',
+  destructive: '#EF4444',
   mutedForeground: '#71717A',
 } as const;
 
