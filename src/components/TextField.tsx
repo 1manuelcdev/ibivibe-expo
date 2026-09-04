@@ -2,54 +2,37 @@ import { forwardRef, type ComponentProps } from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Text, TextInput, View } from 'react-native';
 
-import { colors, spacing } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 
 type TextFieldProps = ComponentProps<typeof TextInput> & {
   containerStyle?: StyleProp<ViewStyle>;
   error?: string;
+  inputClassName?: string;
   inputStyle?: StyleProp<TextStyle>;
   label?: string;
   required?: boolean;
 };
 
 export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
-  { containerStyle, error, inputStyle, label, required = false, style: _style, ...props },
+  { className: _className, containerStyle, error, inputClassName, inputStyle, label, required = false, style: _style, ...props },
   ref,
 ) {
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View className="gap-2" style={containerStyle}>
       {label ? (
-        <Text style={styles.label}>
+        <Text className="font-dm-medium text-base text-foreground">
           {label}
-          {required ? <Text style={styles.required}> *</Text> : null}
+          {required ? <Text className="text-destructive"> *</Text> : null}
         </Text>
       ) : null}
       <TextInput
         ref={ref}
         placeholderTextColor={colors.mutedForeground}
-        style={[styles.input, error && styles.inputError, inputStyle]}
+        className={`${error ? 'border-destructive' : 'border-border'} h-12 rounded-control border bg-muted px-4 font-dm-medium text-base text-foreground ${inputClassName ?? ''}`}
+        style={inputStyle}
         {...props}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text className="font-dm text-xs text-red-300">{error}</Text> : null}
     </View>
   );
 });
-
-const styles = {
-  container: { gap: 8 },
-  label: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
-  required: { color: '#EF4444' },
-  input: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    color: colors.foreground,
-    fontFamily: 'DMSans-Medium',
-    fontSize: 16,
-    height: 48,
-    paddingHorizontal: spacing.control,
-  },
-  inputError: { borderColor: '#EF4444' },
-  error: { color: '#FCA5A5', fontFamily: 'DMSans-Regular', fontSize: 12 },
-} as const;

@@ -6,7 +6,7 @@ import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 
 import { TextField } from '@/components/TextField';
 import { useLoginViewModel } from '@/features/auth/viewmodels/useLoginViewModel';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 
 type LoginFormProps = { initialEmail?: string };
 
@@ -20,21 +20,21 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
   }, [error]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" hitSlop={12} onPress={() => router.back()} style={styles.backButton}>
+    <View className="flex-1 px-6 pt-4">
+      <View className="h-10 justify-center">
+        <Pressable accessibilityLabel="Voltar" className="size-10 items-center justify-center" hitSlop={12} onPress={() => router.back()}>
           <Ionicons color={colors.foreground} name="arrow-back" size={24} />
         </Pressable>
       </View>
 
-      <View style={styles.main}>
-        <View style={styles.heading}>
-          <Text style={styles.eyebrow}>Bem vindo(a) de volta!</Text>
-          <Text style={styles.title}>Entrar</Text>
+      <View className="gap-6 pt-6">
+        <View className="gap-2">
+          <Text className="font-dm text-base text-muted-foreground">Bem vindo(a) de volta!</Text>
+          <Text className="font-dm-medium text-2xl leading-8 text-foreground">Entrar</Text>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputs}>
+        <View className="gap-6">
+          <View className="gap-3">
             <Controller
               control={control}
               name="email"
@@ -43,7 +43,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                   autoCapitalize="none"
                   autoComplete="email"
                   error={fieldState.error?.message}
-                  inputStyle={styles.input}
+                  inputClassName="h-10"
                   keyboardType="email-address"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -63,7 +63,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                   autoCapitalize="none"
                   autoComplete="password"
                   error={fieldState.error?.message}
-                  inputStyle={styles.input}
+                  inputClassName="h-10"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={submit}
@@ -75,8 +75,8 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                 />
               )}
             />
-            <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordLabel}>Esqueci minha senha</Text>
+            <Pressable className="h-8 self-start justify-center px-2" onPress={() => router.push('/(auth)/forgot-password')}>
+              <Text className="font-dm-medium text-sm text-foreground">Esqueci minha senha</Text>
             </Pressable>
           </View>
 
@@ -84,48 +84,15 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
             accessibilityRole="button"
             disabled={formState.isSubmitting}
             onPress={submit}
-            style={({ pressed }) => [
-              styles.submit,
-              (pressed || formState.isSubmitting) && styles.pressed,
-            ]}
+            className="h-12 items-center justify-center rounded-button bg-primary active:opacity-75"
           >
-            <Text style={styles.submitLabel}>{formState.isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
+            <Text className="font-dm-semibold text-sm text-primary-foreground">{formState.isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
           </Pressable>
-          <Pressable onPress={() => router.push('/(auth)/register')} style={styles.registerButton}>
-            <Text style={styles.registerLabel}>Ainda não tenho conta</Text>
+          <Pressable className="h-8 items-center justify-center px-2" onPress={() => router.push('/(auth)/register')}>
+            <Text className="font-dm-medium text-sm text-foreground">Ainda não tenho conta</Text>
           </Pressable>
         </View>
       </View>
     </View>
   );
 }
-
-const styles = {
-  container: { flex: 1, paddingHorizontal: spacing.screen, paddingTop: 16 },
-  header: { height: 40, justifyContent: 'center' as const },
-  backButton: { alignItems: 'center' as const, height: 40, justifyContent: 'center' as const, width: 40 },
-  main: { gap: 24, paddingTop: 24 },
-  heading: { gap: 8 },
-  eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
-  title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 },
-  form: { gap: 24 },
-  inputs: { gap: 12 },
-  input: { height: 40 },
-  forgotPassword: { alignSelf: 'flex-start' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 },
-  forgotPasswordLabel: {
-    color: colors.foreground,
-    fontFamily: 'DMSans-Medium',
-    fontSize: 14,
-  },
-  submit: {
-    alignItems: 'center' as const,
-    backgroundColor: colors.primary,
-    borderRadius: radius.button,
-    height: 48,
-    justifyContent: 'center' as const,
-  },
-  submitLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
-  registerButton: { alignItems: 'center' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 },
-  registerLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
-  pressed: { opacity: 0.75 },
-} as const;
