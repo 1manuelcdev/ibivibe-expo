@@ -8,18 +8,18 @@ export function SearchScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Pressable onPress={() => router.push('/(app)/search/expanded')} style={styles.searchField}>
+    <View className="flex-1 bg-background">
+      <ScrollView contentContainerClassName="gap-4 p-4" showsVerticalScrollIndicator={false}>
+        <Pressable className="h-12 flex-row items-center gap-2.5 rounded-button border border-border px-4" onPress={() => router.push('/(app)/search/expanded')}>
           <Ionicons color={colors.mutedForeground} name="search-outline" size={18} />
-          <Text style={styles.searchText}>O que vamos fazer hoje na Ibiapaba?</Text>
+          <Text className="flex-1 font-dm text-base text-muted-foreground">O que vamos fazer hoje na Ibiapaba?</Text>
         </Pressable>
-        <Text style={styles.message}>
+        <Text className="font-dm text-base text-muted-foreground">
           Atualize seus interesses para ver recomendações certeiras
         </Text>
-        <View style={styles.suggestionBox}>
-          <Text style={styles.title}>Sugestões</Text>
-          <Text style={styles.muted}>
+        <View className="gap-2 border-t border-border pt-4">
+          <Text className="font-dm-semibold text-base text-muted-foreground">Sugestões</Text>
+          <Text className="font-dm text-base text-muted-foreground">
             Estamos trabalhando para trazer sugestões inteligentes para você.
           </Text>
         </View>
@@ -27,28 +27,3 @@ export function SearchScreen() {
     </View>
   );
 }
-
-const styles = {
-  screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 16, padding: 16 },
-  searchField: {
-    alignItems: 'center' as const,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
-    flexDirection: 'row' as const,
-    gap: 10,
-    height: 48,
-    paddingHorizontal: 16,
-  },
-  searchText: {
-    color: colors.mutedForeground,
-    flex: 1,
-    fontFamily: 'DMSans-Regular',
-    fontSize: 14,
-  },
-  message: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
-  suggestionBox: { borderTopColor: colors.border, borderTopWidth: 1, gap: 8, paddingTop: 16 },
-  title: { color: colors.mutedForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
-  muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
-} as const;

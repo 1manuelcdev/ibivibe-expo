@@ -211,12 +211,12 @@ const styles = {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
   },
-  sectionTitle: { color: colors.mutedForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
+  sectionTitle: { color: colors.mutedForeground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
   clear: { color: colors.primary, fontFamily: 'DMSans-Medium', fontSize: 13 },
   muted: {
     color: colors.mutedForeground,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
   },
   recentRow: {

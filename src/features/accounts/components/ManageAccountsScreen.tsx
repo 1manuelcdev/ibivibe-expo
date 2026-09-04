@@ -93,7 +93,7 @@ const styles = {
     height: 48,
     justifyContent: 'center' as const,
   },
-  outlineText: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  outlineText: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   primaryButton: {
     alignItems: 'center' as const,
     backgroundColor: colors.primary,
@@ -104,7 +104,7 @@ const styles = {
     height: 48,
     justifyContent: 'center' as const,
   },
-  primaryText: { color: colors.primaryForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  primaryText: { color: colors.primaryForeground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   accountCard: {
     alignItems: 'center' as const,
     borderRadius: 16,

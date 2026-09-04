@@ -9,16 +9,16 @@ export function UnderDevelopmentScreen() {
   const { feature } = useLocalSearchParams<{ feature?: string }>();
 
   return (
-    <View style={styles.screen}>
-      <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={styles.back}>
+    <View className="flex-1 bg-background p-6">
+      <Pressable accessibilityLabel="Voltar" className="h-11 w-11 justify-center" onPress={() => router.back()}>
         <Ionicons color={colors.foreground} name="arrow-back" size={24} />
       </Pressable>
-      <View style={styles.content}>
-        <View style={styles.icon}>
+      <View className="flex-1 items-center justify-center">
+        <View className="mb-6 size-24 items-center justify-center rounded-full bg-muted">
           <Ionicons color={colors.primary} name="construct-outline" size={42} />
         </View>
-        <Text style={styles.title}>Em desenvolvimento</Text>
-        <Text style={styles.description}>
+        <Text className="text-center font-dm-bold text-[26px] text-foreground">Em desenvolvimento</Text>
+        <Text className="mt-3 max-w-[310px] text-center font-dm text-[15px] leading-6 text-muted-foreground">
           {feature ? `${feature} está` : 'Esta funcionalidade está'} sendo preparada para uma
           próxima versão do IbiVibe.
         </Text>
@@ -26,33 +26,3 @@ export function UnderDevelopmentScreen() {
     </View>
   );
 }
-
-const styles = {
-  screen: { backgroundColor: colors.background, flex: 1, padding: 24 },
-  back: { minHeight: 44, justifyContent: 'center' as const, width: 44 },
-  content: { alignItems: 'center' as const, flex: 1, justifyContent: 'center' as const },
-  icon: {
-    alignItems: 'center' as const,
-    backgroundColor: '#27272A',
-    borderRadius: 32,
-    height: 96,
-    justifyContent: 'center' as const,
-    marginBottom: 24,
-    width: 96,
-  },
-  title: {
-    color: colors.foreground,
-    fontFamily: 'DMSans-Bold',
-    fontSize: 26,
-    textAlign: 'center' as const,
-  },
-  description: {
-    color: colors.mutedForeground,
-    fontFamily: 'DMSans-Regular',
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 12,
-    maxWidth: 310,
-    textAlign: 'center' as const,
-  },
-} as const;

@@ -5,9 +5,10 @@ import { Controller, type Control } from 'react-hook-form';
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { TextField } from '@/components/TextField';
+import { Button } from '@/components/Button';
 import type { RegisterFormValues } from '@/features/auth/models/auth-schemas';
 import { useRegisterViewModel } from '@/features/auth/viewmodels/useRegisterViewModel';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 
 type Values = RegisterFormValues;
 type Step = 0 | 1 | 2;
@@ -44,18 +45,18 @@ export function RegisterForm() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View className="flex-1">
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerClassName="px-6 pt-4"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        style={styles.scroll}
+        className="flex-1"
       >
-        <View style={styles.header}>
-          <Pressable accessibilityLabel="Voltar" hitSlop={12} onPress={back} style={styles.backButton}>
+        <View className="h-10 flex-row items-center justify-between">
+          <Pressable accessibilityLabel="Voltar" className="size-10 items-center justify-center" hitSlop={12} onPress={back}>
             <Ionicons color={colors.foreground} name="arrow-back" size={24} />
           </Pressable>
-          <Text style={styles.progress}>Passo {step + 1} de 3</Text>
+          <Text className="font-dm-medium text-xs text-muted-foreground">Passo {step + 1} de 3</Text>
         </View>
 
       {step === 0 ? (
@@ -76,25 +77,18 @@ export function RegisterForm() {
         ) : null}
         {step === 2 ? <AccountTypeStep control={control} /> : null}
       </ScrollView>
-      <View style={styles.footer}>
-        <Pressable
-          accessibilityRole="button"
+      <View className="gap-5 bg-background px-6 pb-6 pt-4">
+        <Button
           disabled={formState.isSubmitting}
           onPress={() => void next()}
-          style={({ pressed }) => [
-            styles.submit,
-            (pressed || formState.isSubmitting) && styles.pressed,
-          ]}
         >
-          <Text style={styles.submitLabel}>
-            {formState.isSubmitting ? 'Criando conta...' : step === 2 ? 'Criar conta' : 'Continuar'}
-          </Text>
-        </Pressable>
+          {formState.isSubmitting ? 'Criando conta...' : step === 2 ? 'Criar conta' : 'Continuar'}
+        </Button>
         {step === 0 ? (
-          <View style={styles.loginRow}>
-            <Text style={styles.loginText}>Já tem uma conta?</Text>
+          <View className="flex-row items-center justify-center gap-1">
+            <Text className="font-dm text-base text-zinc-300">Já tem uma conta?</Text>
             <Pressable onPress={() => router.replace('/(auth)/login')}>
-              <Text style={styles.loginLink}>Entrar</Text>
+              <Text className="font-dm-semibold text-base text-primary">Entrar</Text>
             </Pressable>
           </View>
         ) : null}
@@ -115,9 +109,9 @@ function CredentialsStep({
   passwordInput: React.RefObject<TextInput | null>;
 }) {
   return (
-    <View style={styles.main}>
+    <View className="flex-1 gap-8 pt-6">
       <Heading eyebrow="Olá, vamos criar sua conta" title="Credenciais" />
-      <View style={styles.fields}>
+      <View className="gap-4">
         <FormField
           autoCapitalize="none"
           autoComplete="email"
@@ -167,9 +161,9 @@ function BasicInfoStep({
   slugInput: React.RefObject<TextInput | null>;
 }) {
   return (
-    <View style={styles.main}>
+    <View className="flex-1 gap-8 pt-6">
       <Heading title="Informações básicas" />
-      <View style={styles.fields}>
+      <View className="gap-4">
         <FormField
           autoComplete="name"
           control={control}
@@ -195,13 +189,13 @@ function BasicInfoStep({
 
 function AccountTypeStep({ control }: { control: Control<Values> }) {
   return (
-    <View style={styles.main}>
+    <View className="flex-1 gap-8 pt-6">
       <Heading eyebrow="Como você quer usar sua conta?" title="Tipo de conta" />
       <Controller
         control={control}
         name="type"
         render={({ field }) => (
-          <View style={styles.accountTypes}>
+          <View className="gap-4">
             <AccountTypeCard
               description="Quero descobrir empresas, eventos e explorar a Serrinha"
               icon="compass-outline"
@@ -219,9 +213,9 @@ function AccountTypeStep({ control }: { control: Control<Values> }) {
           </View>
         )}
       />
-      <View style={styles.infoBox}>
+      <View className="flex-row items-center gap-2.5 rounded-control border border-border bg-muted px-2.5 py-3">
         <Ionicons color={colors.primary} name="information-circle-outline" size={18} />
-        <Text style={styles.infoText}>Você pode alternar o tipo de conta a qualquer momento no app.</Text>
+        <Text className="flex-1 font-dm text-base leading-5 text-foreground">Você pode alternar o tipo de conta a qualquer momento no app.</Text>
       </View>
     </View>
   );
@@ -229,9 +223,9 @@ function AccountTypeStep({ control }: { control: Control<Values> }) {
 
 function Heading({ eyebrow, title }: { eyebrow?: string; title: string }) {
   return (
-    <View style={styles.heading}>
-      {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-      <Text style={styles.title}>{title}</Text>
+    <View className="gap-1">
+      {eyebrow ? <Text className="font-dm text-base text-muted-foreground">{eyebrow}</Text> : null}
+      <Text className="font-dm-medium text-2xl leading-8 text-foreground">{title}</Text>
     </View>
   );
 }
@@ -303,95 +297,16 @@ function AccountTypeCard({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [styles.typeCard, selected && styles.typeCardSelected, pressed && styles.pressed]}
+      className={`gap-1.5 rounded-image border p-4 ${selected ? 'border-primary bg-[#1b2b19]' : 'border-border bg-muted'} active:opacity-75`}
     >
-      <View style={styles.typeCardTop}>
+      <View className="flex-row items-center justify-between">
         <Ionicons color={selected ? colors.primary : colors.foreground} name={icon} size={24} />
-        <View style={[styles.radio, selected && styles.radioSelected]}>
+        <View className={`size-[18px] items-center justify-center rounded-full border ${selected ? 'border-primary bg-primary' : 'border-border'}`}>
           {selected ? <Ionicons color={colors.primaryForeground} name="checkmark" size={12} /> : null}
         </View>
       </View>
-      <Text style={styles.typeTitle}>{label}</Text>
-      <Text style={styles.typeDescription}>{description}</Text>
+      <Text className="mt-0.5 font-dm-medium text-base text-foreground">{label}</Text>
+      <Text className="font-dm text-xs leading-4 text-foreground">{description}</Text>
     </Pressable>
   );
 }
-
-const styles = {
-  screen: { flex: 1 },
-  scroll: { flex: 1 },
-  content: {
-    paddingHorizontal: spacing.screen,
-    paddingTop: 16,
-  },
-  header: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    height: 40,
-    justifyContent: 'space-between' as const,
-  },
-  backButton: { alignItems: 'center' as const, height: 40, justifyContent: 'center' as const, width: 40 },
-  progress: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 13 },
-  main: { flex: 1, gap: 32, paddingTop: 24 },
-  heading: { gap: 4 },
-  eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
-  title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 },
-  fields: { gap: 16 },
-  footer: { backgroundColor: colors.background, gap: 20, paddingBottom: 24, paddingHorizontal: spacing.screen, paddingTop: 16 },
-  submit: {
-    alignItems: 'center' as const,
-    backgroundColor: colors.primary,
-    borderRadius: radius.button,
-    height: 48,
-    justifyContent: 'center' as const,
-  },
-  submitLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
-  loginRow: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 4,
-    justifyContent: 'center' as const,
-  },
-  loginText: { color: '#D4D4D8', fontFamily: 'DMSans-Regular', fontSize: 14 },
-  loginLink: { color: colors.primary, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
-  accountTypes: { gap: 16 },
-  typeCard: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 6,
-    padding: 16,
-  },
-  typeCardSelected: { backgroundColor: 'rgba(185,255,112,0.12)', borderColor: colors.primary },
-  typeCardTop: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-  },
-  radio: {
-    alignItems: 'center' as const,
-    borderColor: colors.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    height: 18,
-    justifyContent: 'center' as const,
-    width: 18,
-  },
-  radioSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  typeTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14, marginTop: 2 },
-  typeDescription: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 12, lineHeight: 17 },
-  infoBox: {
-    alignItems: 'center' as const,
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row' as const,
-    gap: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-  },
-  infoText: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Regular', fontSize: 14, lineHeight: 19 },
-  pressed: { opacity: 0.74 },
-} as const;

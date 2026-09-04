@@ -126,7 +126,7 @@ const styles = {
   },
   avatarText: { color: colors.primaryForeground, fontFamily: 'DMSans-Bold', fontSize: 17 },
   accountInfo: { flex: 1, gap: 3 },
-  accountName: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  accountName: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
   action: {
     alignItems: 'center' as const,
@@ -144,5 +144,5 @@ const styles = {
     width: 40,
   },
   mutedIcon: { backgroundColor: '#27272A' },
-  actionText: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  actionText: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Medium', fontSize: 16 },
 } as const;

@@ -102,14 +102,14 @@ const styles = {
   tabText: {
     color: colors.mutedForeground,
     fontFamily: 'DMSans-Medium',
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center' as const,
   },
   activeTabText: { color: colors.foreground },
   empty: {
     color: colors.mutedForeground,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     paddingTop: 24,
     textAlign: 'center' as const,
   },

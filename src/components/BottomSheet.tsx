@@ -1,8 +1,6 @@
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/theme/tokens';
-
 export function BottomSheet({
   children,
   onClose,
@@ -16,43 +14,13 @@ export function BottomSheet({
 
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
-      <View style={styles.modal}>
-        <Pressable accessibilityLabel="Fechar" onPress={onClose} style={styles.backdrop} />
-        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <View style={styles.handle} />
+      <View className="flex-1 justify-end">
+        <Pressable accessibilityLabel="Fechar" className="absolute inset-0 bg-black/60" onPress={onClose} />
+        <View className="max-h-[82%] rounded-t-3xl border border-border bg-background px-4 pt-3" style={{ paddingBottom: Math.max(insets.bottom, 16) }}>
+          <View className="mb-4 h-1.5 w-10 self-center rounded-full bg-muted-foreground opacity-65" />
           {children}
         </View>
       </View>
     </Modal>
   );
 }
-
-const styles = {
-  modal: { flex: 1, justifyContent: 'flex-end' as const },
-  backdrop: {
-    backgroundColor: 'rgba(0,0,0,0.58)',
-    bottom: 0,
-    left: 0,
-    position: 'absolute' as const,
-    right: 0,
-    top: 0,
-  },
-  sheet: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
-    maxHeight: '82%' as const,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  handle: {
-    alignSelf: 'center' as const,
-    backgroundColor: colors.mutedForeground,
-    borderRadius: 3,
-    height: 5,
-    marginBottom: 16,
-    opacity: 0.65,
-    width: 42,
-  },
-} as const;

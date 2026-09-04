@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 
+import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { useLoginViewModel } from '@/features/auth/viewmodels/useLoginViewModel';
 import { colors } from '@/theme/tokens';
@@ -43,7 +44,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                   autoCapitalize="none"
                   autoComplete="email"
                   error={fieldState.error?.message}
-                  inputClassName="h-10"
+                  inputStyle={{ height: 40 }}
                   keyboardType="email-address"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -63,7 +64,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                   autoCapitalize="none"
                   autoComplete="password"
                   error={fieldState.error?.message}
-                  inputClassName="h-10"
+                  inputStyle={{ height: 40 }}
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={submit}
@@ -76,20 +77,18 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
               )}
             />
             <Pressable className="h-8 self-start justify-center px-2" onPress={() => router.push('/(auth)/forgot-password')}>
-              <Text className="font-dm-medium text-sm text-foreground">Esqueci minha senha</Text>
+              <Text className="font-dm-medium text-base text-foreground">Esqueci minha senha</Text>
             </Pressable>
           </View>
 
-          <Pressable
-            accessibilityRole="button"
+          <Button
             disabled={formState.isSubmitting}
             onPress={submit}
-            className="h-12 items-center justify-center rounded-button bg-primary active:opacity-75"
           >
-            <Text className="font-dm-semibold text-sm text-primary-foreground">{formState.isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
-          </Pressable>
+            {formState.isSubmitting ? 'Entrando...' : 'Entrar'}
+          </Button>
           <Pressable className="h-8 items-center justify-center px-2" onPress={() => router.push('/(auth)/register')}>
-            <Text className="font-dm-medium text-sm text-foreground">Ainda não tenho conta</Text>
+            <Text className="font-dm-medium text-base text-foreground">Ainda não tenho conta</Text>
           </Pressable>
         </View>
       </View>

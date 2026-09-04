@@ -242,7 +242,7 @@ const styles = {
   error: {
     color: '#FCA5A5',
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     marginTop: 20,
     textAlign: 'center' as const,
@@ -250,7 +250,7 @@ const styles = {
   message: {
     color: colors.primary,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     marginTop: 20,
     textAlign: 'center' as const,
@@ -274,7 +274,7 @@ const styles = {
   dialogDescription: {
     color: '#D4D4D8',
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     marginTop: 8,
   },

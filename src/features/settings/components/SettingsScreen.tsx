@@ -181,7 +181,7 @@ const styles = {
   groupTitle: {
     color: colors.mutedForeground,
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 2,
   },
   row: {

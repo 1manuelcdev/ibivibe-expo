@@ -7,14 +7,13 @@ import { colors } from '@/theme/tokens';
 type TextFieldProps = ComponentProps<typeof TextInput> & {
   containerStyle?: StyleProp<ViewStyle>;
   error?: string;
-  inputClassName?: string;
   inputStyle?: StyleProp<TextStyle>;
   label?: string;
   required?: boolean;
 };
 
 export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
-  { className: _className, containerStyle, error, inputClassName, inputStyle, label, required = false, style: _style, ...props },
+  { className: _className, containerStyle, error, inputStyle, label, required = false, style: _style, ...props },
   ref,
 ) {
   return (
@@ -28,8 +27,8 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
       <TextInput
         ref={ref}
         placeholderTextColor={colors.mutedForeground}
-        className={`${error ? 'border-destructive' : 'border-border'} h-12 rounded-control border bg-muted px-4 font-dm-medium text-base text-foreground ${inputClassName ?? ''}`}
-        style={inputStyle}
+        className="h-12 rounded-control border border-border bg-muted px-4 font-dm-medium text-base text-foreground"
+        style={[error ? { borderColor: colors.destructive } : undefined, inputStyle]}
         {...props}
       />
       {error ? <Text className="font-dm text-xs text-red-300">{error}</Text> : null}

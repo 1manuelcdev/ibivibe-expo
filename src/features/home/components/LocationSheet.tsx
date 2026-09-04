@@ -77,7 +77,7 @@ const styles = {
     minHeight: 190,
     padding: 20,
   },
-  muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
   mapHint: {
     color: colors.mutedForeground,
     fontFamily: 'DMSans-Regular',
@@ -95,7 +95,7 @@ const styles = {
     justifyContent: 'center' as const,
     minHeight: 48,
   },
-  primaryText: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
+  primaryText: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
   secondaryButton: {
     alignItems: 'center' as const,
     backgroundColor: '#27272A',
@@ -110,7 +110,7 @@ const styles = {
   secondaryText: {
     color: colors.foreground,
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center' as const,
   },
   sectionTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 18 },
@@ -129,5 +129,5 @@ const styles = {
     minHeight: 56,
     paddingHorizontal: 12,
   },
-  cityText: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  cityText: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Medium', fontSize: 16 },
 } as const;
