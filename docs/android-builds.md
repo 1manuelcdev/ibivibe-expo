@@ -49,7 +49,7 @@ Depois de instalar uma development build local, não é necessário gerar novo A
 para alterações em TypeScript, JavaScript, estilos ou assets já empacotados.
 
 ```bash
-pnpm start -- --dev-client
+pnpm dev
 ```
 
 Abra o app IbiVibe instalado e conecte-o ao Metro. As alterações JavaScript
@@ -59,5 +59,5 @@ devem aparecer por Fast Refresh.
 
 1. Conecte o Android via USB com depuração USB ativada.
 2. Execute `pnpm device:android` uma vez para escolher o telefone USB.
-3. No dia a dia, execute `pnpm start -- --dev-client`.
+3. No dia a dia, execute `pnpm dev`.
 4. Reexecute `pnpm device:android` após mudanças nativas.
