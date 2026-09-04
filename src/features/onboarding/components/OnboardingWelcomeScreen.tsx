@@ -1,9 +1,9 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { useSessionStore } from '@/stores/session-store';
-import { colors } from '@/theme/tokens';
+import { Button } from '@/components/Button';
 
 const illustrations = {
   business: require('../../../../assets/onboarding/business-welcome.png'),
@@ -17,21 +17,20 @@ export function OnboardingWelcomeScreen({ variant }: { variant: 'business' | 'us
   const isBusiness = variant === 'business';
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.content}>
-        <View style={styles.main}>
-          <Image source={illustrations[variant]} style={styles.illustration} />
-          <View style={styles.copy}>
-            <Text style={styles.title}>Boas-vindas, {displayName}!</Text>
-            <Text style={styles.description}>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 gap-8 px-6 pb-6 pt-8">
+        <View className="flex-1 items-center justify-center gap-4">
+          <Image className="size-[249px]" source={illustrations[variant]} />
+          <View className="items-center gap-2">
+            <Text className="font-dm-semibold text-2xl text-foreground">Boas-vindas, {displayName}!</Text>
+            <Text className="text-center font-dm text-base leading-6 text-foreground">
               {isBusiness
                 ? 'Vamos começar a divulgar em breve, mas primeiro precisamos saber mais sobre seu trabalho.'
                 : 'Vamos iniciar a exploração em breve, mas primeiro precisamos saber de seus interesses para recomendar de forma acertada.'}
             </Text>
           </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
+        <Button
           onPress={() =>
             router.push(
               isBusiness
@@ -39,24 +38,10 @@ export function OnboardingWelcomeScreen({ variant }: { variant: 'business' | 'us
                 : '/(onboarding)/user/businesses',
             )
           }
-          style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
         >
-          <Text style={styles.primaryLabel}>Continuar</Text>
-        </Pressable>
+          Continuar
+        </Button>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = {
-  screen: { backgroundColor: colors.background, flex: 1 },
-  content: { flex: 1, gap: 32, paddingBottom: 24, paddingHorizontal: 24, paddingTop: 31 },
-  main: { alignItems: 'center' as const, flex: 1, gap: 16, justifyContent: 'center' as const },
-  illustration: { height: 249, width: 249 },
-  copy: { alignItems: 'center' as const, gap: 8 },
-  title: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 24, textAlign: 'center' as const },
-  description: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 16, lineHeight: 23, textAlign: 'center' as const },
-  primaryButton: { alignItems: 'center' as const, backgroundColor: colors.primary, borderRadius: 24, height: 48, justifyContent: 'center' as const, width: '100%' as const },
-  primaryLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
-  pressed: { opacity: 0.8 },
-} as const;

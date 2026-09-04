@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
 type ButtonProps = Omit<ComponentProps<typeof Pressable>, 'children'> & {
   children: ReactNode;
@@ -21,9 +21,9 @@ export function Button({ children, className, disabled, labelClassName, style, v
       className={`h-12 items-center justify-center rounded-button ${className ?? ''}`}
       disabled={disabled}
       style={(state) => [
-        isPrimary && styles.primary,
-        disabled && styles.disabled,
-        state.pressed && styles.pressed,
+        isPrimary && { backgroundColor: '#9FFF8B' },
+        disabled && { opacity: 0.5 },
+        state.pressed && { opacity: 0.78 },
         typeof style === 'function' ? style(state) : style,
       ]}
     >
@@ -37,9 +37,3 @@ export function Button({ children, className, disabled, labelClassName, style, v
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  disabled: { opacity: 0.5 },
-  pressed: { opacity: 0.78 },
-  primary: { backgroundColor: '#9FFF8B' },
-});

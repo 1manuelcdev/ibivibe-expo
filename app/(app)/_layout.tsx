@@ -54,14 +54,14 @@ function AppNavbar(_props: object) {
         : 0;
 
   return (
-    <View style={[styles.navbar, { paddingBottom: insets.bottom, height: 68 + insets.bottom }]}>
+    <View className="flex-row justify-around border-t border-border bg-background px-4 pt-2" style={{ paddingBottom: insets.bottom, height: 68 + insets.bottom }}>
       {items.map((item, index) => {
         const selected = activeIndex === index;
         return (
           <Pressable
             key={item.label}
             onPress={() => router.push(item.route as never)}
-            style={styles.navItem}
+            className="flex-1 items-center gap-0.5"
           >
             <Ionicons
               color={selected ? colors.foreground : colors.mutedForeground}
@@ -69,10 +69,7 @@ function AppNavbar(_props: object) {
               size={25}
             />
             <Text
-              style={[
-                styles.navLabel,
-                { color: selected ? colors.foreground : colors.mutedForeground },
-              ]}
+              className={`font-dm-medium text-xs ${selected ? 'text-foreground' : 'text-muted-foreground'}`}
             >
               {item.label}
             </Text>
@@ -82,18 +79,3 @@ function AppNavbar(_props: object) {
     </View>
   );
 }
-
-const styles = {
-  navbar: {
-    backgroundColor: colors.background,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: 'row' as const,
-    height: 68,
-    justifyContent: 'space-around' as const,
-    paddingHorizontal: 16,
-    paddingTop: 7,
-  },
-  navItem: { alignItems: 'center' as const, flex: 1, gap: 2 },
-  navLabel: { fontFamily: 'DMSans-Medium', fontSize: 12 },
-} as const;
