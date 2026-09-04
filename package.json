@@ -8,6 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "oxlint app src --react-plugin",
     "lint:fix": "oxlint app src --react-plugin --fix",
     "format": "oxfmt .",
@@ -38,10 +40,14 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^14.0.1",
     "@types/react": "~19.2.2",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
-    "typescript": "~6.0.3"
+    "react-test-renderer": "^19.2.3",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11",
+    "vitest-native": "^0.13.0"
   },
   "packageManager": "pnpm@11.17.0"
 }
