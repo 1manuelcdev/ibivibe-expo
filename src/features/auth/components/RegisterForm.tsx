@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, type Control } from 'react-hook-form';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { TextField } from '@/components/TextField';
 import type { RegisterFormValues } from '@/features/auth/models/auth-schemas';
@@ -16,6 +16,9 @@ export function RegisterForm() {
   const router = useRouter();
   const { control, error, formState, setValue, submit, trigger } = useRegisterViewModel();
   const [step, setStep] = useState<Step>(0);
+  const passwordInput = useRef<TextInput>(null);
+  const passwordConfirmationInput = useRef<TextInput>(null);
+  const slugInput = useRef<TextInput>(null);
 
   useEffect(() => {
     if (error) Alert.alert('Não foi possível criar sua conta', error);
@@ -55,9 +58,21 @@ export function RegisterForm() {
           <Text style={styles.progress}>Passo {step + 1} de 3</Text>
         </View>
 
-        {step === 0 ? <CredentialsStep control={control} /> : null}
-        {step === 1 ? (
-          <BasicInfoStep control={control} onNameChange={(name) => setValue('display_name', name)} />
+      {step === 0 ? (
+        <CredentialsStep
+          control={control}
+          passwordConfirmationInput={passwordConfirmationInput}
+          passwordInput={passwordInput}
+          onComplete={() => void next()}
+        />
+      ) : null}
+      {step === 1 ? (
+          <BasicInfoStep
+            control={control}
+            onComplete={() => void next()}
+            onNameChange={(name) => setValue('display_name', name)}
+            slugInput={slugInput}
+          />
         ) : null}
         {step === 2 ? <AccountTypeStep control={control} /> : null}
       </ScrollView>
@@ -88,7 +103,17 @@ export function RegisterForm() {
   );
 }
 
-function CredentialsStep({ control }: { control: Control<Values> }) {
+function CredentialsStep({
+  control,
+  onComplete,
+  passwordConfirmationInput,
+  passwordInput,
+}: {
+  control: Control<Values>;
+  onComplete: () => void;
+  passwordConfirmationInput: React.RefObject<TextInput | null>;
+  passwordInput: React.RefObject<TextInput | null>;
+}) {
   return (
     <View style={styles.main}>
       <Heading eyebrow="Olá, vamos criar sua conta" title="Credenciais" />
@@ -100,6 +125,7 @@ function CredentialsStep({ control }: { control: Control<Values> }) {
           keyboardType="email-address"
           label="E-mail"
           name="email"
+          nextInput={passwordInput}
           placeholder="john@doe.com"
         />
         <FormField
@@ -108,6 +134,8 @@ function CredentialsStep({ control }: { control: Control<Values> }) {
           control={control}
           label="Senha"
           name="password"
+          inputRef={passwordInput}
+          nextInput={passwordConfirmationInput}
           placeholder="No mínimo 8 dígitos"
           secureTextEntry
         />
@@ -117,6 +145,8 @@ function CredentialsStep({ control }: { control: Control<Values> }) {
           control={control}
           label="Confirmação da senha"
           name="password_confirm"
+          inputRef={passwordConfirmationInput}
+          onSubmit={onComplete}
           placeholder="A mesma senha acima"
           secureTextEntry
         />
@@ -127,10 +157,14 @@ function CredentialsStep({ control }: { control: Control<Values> }) {
 
 function BasicInfoStep({
   control,
+  onComplete,
   onNameChange,
+  slugInput,
 }: {
   control: Control<Values>;
+  onComplete: () => void;
   onNameChange: (name: string) => void;
+  slugInput: React.RefObject<TextInput | null>;
 }) {
   return (
     <View style={styles.main}>
@@ -141,6 +175,7 @@ function BasicInfoStep({
           control={control}
           label="Nome"
           name="name"
+          nextInput={slugInput}
           onValueChange={onNameChange}
           placeholder="John Doe"
         />
@@ -149,6 +184,8 @@ function BasicInfoStep({
           control={control}
           label="Usuário"
           name="slug"
+          inputRef={slugInput}
+          onSubmit={onComplete}
           placeholder="john-doe"
         />
       </View>
@@ -203,10 +240,22 @@ type FieldProps = {
   control: Control<Values>;
   label: string;
   name: Exclude<keyof Values, 'type'>;
+  inputRef?: React.RefObject<TextInput | null>;
+  nextInput?: React.RefObject<TextInput | null>;
+  onSubmit?: () => void;
   onValueChange?: (value: string) => void;
 } & Omit<React.ComponentProps<typeof TextField>, 'error' | 'label' | 'onChangeText' | 'value'>;
 
-function FormField({ control, label, name, onValueChange, ...inputProps }: FieldProps) {
+function FormField({
+  control,
+  inputRef,
+  label,
+  name,
+  nextInput,
+  onSubmit,
+  onValueChange,
+  ...inputProps
+}: FieldProps) {
   return (
     <Controller
       control={control}
@@ -221,7 +270,14 @@ function FormField({ control, label, name, onValueChange, ...inputProps }: Field
               field.onChange(value);
               onValueChange?.(value);
             }}
+            onSubmitEditing={() => {
+              if (nextInput) nextInput.current?.focus();
+              else onSubmit?.();
+            }}
             required
+            ref={inputRef}
+            returnKeyType={nextInput ? 'next' : 'done'}
+            blurOnSubmit={!nextInput}
             value={typeof field.value === 'string' ? field.value : ''}
           />
       )}

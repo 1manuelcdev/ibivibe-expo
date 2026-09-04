@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TextField } from '@/components/TextField';
@@ -24,6 +24,7 @@ export function BusinessDataScreen() {
   const [hasBranches, setHasBranches] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [picker, setPicker] = useState<'branches' | 'headquarters' | null>(null);
+  const cnpjInput = useRef<TextInput>(null);
   const digits = cnpj.replace(/\D/g, '');
 
   const isValid = Boolean(name.trim() && headquartersCity && digits.length === 14);
@@ -66,7 +67,7 @@ export function BusinessDataScreen() {
         </View>
         <View style={styles.form}>
           <Field label="Nome" required>
-            <TextField onChangeText={setName} placeholder="Nome fantasia" value={name} />
+            <TextField blurOnSubmit={false} onChangeText={setName} onSubmitEditing={() => cnpjInput.current?.focus()} placeholder="Nome fantasia" returnKeyType="next" value={name} />
           </Field>
           <View style={styles.field}>
             <Text style={styles.label}>Localização <Text style={styles.required}>*</Text></Text>
@@ -76,7 +77,7 @@ export function BusinessDataScreen() {
             {hasBranches ? <PickerField label="Cidades com filiais" value={branchCities.length ? branchCities.map((city) => city.name).join(', ') : undefined} onPress={() => setPicker('branches')} /> : null}
           </View>
           <Field label="CNPJ" required>
-            <TextField keyboardType="number-pad" maxLength={18} onChangeText={(value) => setCnpj(formatCnpj(value))} placeholder="00.000.000/0000-00" value={cnpj} />
+            <TextField keyboardType="number-pad" maxLength={18} onChangeText={(value) => setCnpj(formatCnpj(value))} onSubmitEditing={() => void submit()} placeholder="00.000.000/0000-00" ref={cnpjInput} returnKeyType="done" value={cnpj} />
           </Field>
           {cities.isLoading ? <ActivityIndicator color={colors.primary} /> : null}
           {cities.isError ? <Text style={styles.error}>Não foi possível carregar as cidades.</Text> : null}

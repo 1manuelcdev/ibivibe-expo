@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Controller } from 'react-hook-form';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 
 import { TextField } from '@/components/TextField';
 import { useLoginViewModel } from '@/features/auth/viewmodels/useLoginViewModel';
@@ -12,6 +12,7 @@ type LoginFormProps = { initialEmail?: string };
 export function LoginForm({ initialEmail = '' }: LoginFormProps) {
   const router = useRouter();
   const { control, error, formState, submit } = useLoginViewModel(initialEmail);
+  const passwordInput = useRef<TextInput>(null);
 
   useEffect(() => {
     if (error) Alert.alert('Não foi possível entrar', error);
@@ -38,7 +39,10 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
               label="E-mail"
               onBlur={onBlur}
               onChangeText={onChange}
+              onSubmitEditing={() => passwordInput.current?.focus()}
               placeholder="voce@email.com"
+              returnKeyType="next"
+              blurOnSubmit={false}
               value={value}
             />
           )}
@@ -54,7 +58,10 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
               label="Senha"
               onBlur={onBlur}
               onChangeText={onChange}
+              onSubmitEditing={submit}
               placeholder="Sua senha"
+              ref={passwordInput}
+              returnKeyType="done"
               secureTextEntry
               value={value}
             />

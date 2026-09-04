@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { forwardRef, type ComponentProps } from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Text, TextInput, View } from 'react-native';
 
@@ -12,15 +12,10 @@ type TextFieldProps = ComponentProps<typeof TextInput> & {
   required?: boolean;
 };
 
-export function TextField({
-  containerStyle,
-  error,
-  inputStyle,
-  label,
-  required = false,
-  style: _style,
-  ...props
-}: TextFieldProps) {
+export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
+  { containerStyle, error, inputStyle, label, required = false, style: _style, ...props },
+  ref,
+) {
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? (
@@ -30,6 +25,7 @@ export function TextField({
         </Text>
       ) : null}
       <TextInput
+        ref={ref}
         placeholderTextColor={colors.mutedForeground}
         style={[styles.input, error && styles.inputError, inputStyle]}
         {...props}
@@ -37,7 +33,7 @@ export function TextField({
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
-}
+});
 
 const styles = {
   container: { gap: 8 },

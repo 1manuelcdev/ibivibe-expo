@@ -177,7 +177,9 @@ function VerificationDialog({
             inputStyle={styles.input}
             keyboardType={isEmail ? 'email-address' : 'default'}
             onChangeText={setValue}
+            onSubmitEditing={() => onSubmit(value)}
             placeholder={isEmail ? 'voce@email.com' : 'Cole o token aqui'}
+            returnKeyType="done"
             value={value}
           />
           <View style={styles.dialogActions}>
