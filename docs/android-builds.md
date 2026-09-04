@@ -55,6 +55,13 @@ pnpm dev
 Abra o app IbiVibe instalado e conecte-o ao Metro. As alterações JavaScript
 devem aparecer por Fast Refresh.
 
+Se o app estiver exibindo bundle ou assets antigos, reinicie o Metro com o
+cache limpo:
+
+```bash
+pnpm dev:clear
+```
+
 ## Fluxo recomendado
 
 1. Conecte o Android via USB com depuração USB ativada.
