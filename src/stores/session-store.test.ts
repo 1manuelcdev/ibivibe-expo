@@ -121,4 +121,19 @@ describe('session store', () => {
       status: 'authenticated',
     });
   });
+
+  it('continues to onboarding after email verification for a newly registered account', async () => {
+    useSessionStore.setState({
+      account: { ...verifiedAccount, is_verified: false, needs_onboarding: true },
+      status: 'needs-verification',
+    });
+    mocks.getCompletionState.mockResolvedValue(false);
+
+    await useSessionStore.getState().completeEmailVerification();
+
+    expect(useSessionStore.getState()).toMatchObject({
+      account: { id: verifiedAccount.id, is_verified: true },
+      status: 'needs-onboarding',
+    });
+  });
 });

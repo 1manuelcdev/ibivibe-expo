@@ -19,6 +19,7 @@ type SessionState = {
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   setAuthResponse: (response: AuthResponse) => Promise<void>;
+  completeEmailVerification: () => Promise<void>;
   completeOnboarding: (account: Account) => Promise<void>;
   updateAccount: (account: Account) => void;
   logout: () => Promise<void>;
@@ -70,6 +71,16 @@ export const useSessionStore = create<SessionState>((set) => ({
   setAuthResponse: async (response) => {
     await tokenStorage.set(response.access_token, response.refresh_token);
     set({ status: getStatus(response.account), account: response.account });
+  },
+
+  completeEmailVerification: async () => {
+    const account = useSessionStore.getState().account;
+
+    if (!account) return;
+
+    const verifiedAccount = { ...account, email_verified: true, is_verified: true };
+    const hasPendingOnboarding = (await onboardingStorage.getCompletionState(account.id)) === false;
+    set({ account: verifiedAccount, status: getStatus(verifiedAccount, hasPendingOnboarding) });
   },
 
   completeOnboarding: async (account) => {

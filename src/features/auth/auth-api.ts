@@ -20,4 +20,12 @@ export const authApi = {
   async verifyEmail(token: string) {
     await apiClient.get('/auth/verify-email', { params: { token: token.trim() } });
   },
+
+  async resendVerificationEmail() {
+    await apiClient.post('/auth/resend-verification');
+  },
+
+  async changeUnverifiedEmail(email: string) {
+    await apiClient.post('/auth/change-unverified-email', { email: email.trim() });
+  },
 };
