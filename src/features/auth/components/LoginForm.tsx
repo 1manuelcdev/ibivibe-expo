@@ -77,7 +77,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
               )}
             />
             <Pressable className="h-8 self-start justify-center px-2" onPress={() => router.push('/(auth)/forgot-password')}>
-              <Text className="font-dm-medium text-sm text-foreground">Esqueci minha senha</Text>
+              <Text className="font-dm-medium text-base text-foreground">Esqueci minha senha</Text>
             </Pressable>
           </View>
 
@@ -88,7 +88,7 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
             {formState.isSubmitting ? 'Entrando...' : 'Entrar'}
           </Button>
           <Pressable className="h-8 items-center justify-center px-2" onPress={() => router.push('/(auth)/register')}>
-            <Text className="font-dm-medium text-sm text-foreground">Ainda não tenho conta</Text>
+            <Text className="font-dm-medium text-base text-foreground">Ainda não tenho conta</Text>
           </Pressable>
         </View>
       </View>

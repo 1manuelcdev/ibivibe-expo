@@ -86,9 +86,9 @@ export function RegisterForm() {
         </Button>
         {step === 0 ? (
           <View className="flex-row items-center justify-center gap-1">
-            <Text className="font-dm text-sm text-zinc-300">Já tem uma conta?</Text>
+            <Text className="font-dm text-base text-zinc-300">Já tem uma conta?</Text>
             <Pressable onPress={() => router.replace('/(auth)/login')}>
-              <Text className="font-dm-semibold text-sm text-primary">Entrar</Text>
+              <Text className="font-dm-semibold text-base text-primary">Entrar</Text>
             </Pressable>
           </View>
         ) : null}
@@ -215,7 +215,7 @@ function AccountTypeStep({ control }: { control: Control<Values> }) {
       />
       <View className="flex-row items-center gap-2.5 rounded-control border border-border bg-muted px-2.5 py-3">
         <Ionicons color={colors.primary} name="information-circle-outline" size={18} />
-        <Text className="flex-1 font-dm text-sm leading-5 text-foreground">Você pode alternar o tipo de conta a qualquer momento no app.</Text>
+        <Text className="flex-1 font-dm text-base leading-5 text-foreground">Você pode alternar o tipo de conta a qualquer momento no app.</Text>
       </View>
     </View>
   );
@@ -305,7 +305,7 @@ function AccountTypeCard({
           {selected ? <Ionicons color={colors.primaryForeground} name="checkmark" size={12} /> : null}
         </View>
       </View>
-      <Text className="mt-0.5 font-dm-medium text-sm text-foreground">{label}</Text>
+      <Text className="mt-0.5 font-dm-medium text-base text-foreground">{label}</Text>
       <Text className="font-dm text-xs leading-4 text-foreground">{description}</Text>
     </Pressable>
   );

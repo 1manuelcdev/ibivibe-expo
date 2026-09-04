@@ -288,7 +288,7 @@ const styles = {
     color: colors.foreground,
     flex: 1,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 21,
   },
   sectionTitle: {
@@ -310,5 +310,5 @@ const styles = {
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  retryText: { color: colors.primaryForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  retryText: { color: colors.primaryForeground, fontFamily: 'DMSans-Medium', fontSize: 16 },
 } as const;

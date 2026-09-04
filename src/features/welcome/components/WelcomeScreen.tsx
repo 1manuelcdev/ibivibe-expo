@@ -107,7 +107,7 @@ const styles = {
   description: {
     color: colors.foreground,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 18,
     textAlign: 'center' as const,
   },

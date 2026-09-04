@@ -483,7 +483,7 @@ const styles = {
     color: colors.mutedForeground,
     flex: 1,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
   },
   bannerWrap: {
     borderRadius: 12,
@@ -529,7 +529,7 @@ const styles = {
     fontSize: 16,
     lineHeight: 21,
   },
-  seeAll: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  seeAll: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   categoryList: { gap: 6 },
   category: {
     borderColor: colors.border,
@@ -538,7 +538,7 @@ const styles = {
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  categoryText: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  categoryText: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 16 },
   cards: { gap: 16 },
   card: {
     backgroundColor: '#27272A',
@@ -554,7 +554,7 @@ const styles = {
   cardTitle: {
     color: colors.foreground,
     fontFamily: 'DMSans-Medium',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 19,
   },
   cardMeta: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },

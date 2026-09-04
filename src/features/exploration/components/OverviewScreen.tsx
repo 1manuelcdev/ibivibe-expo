@@ -273,7 +273,7 @@ const styles = {
   emptyText: {
     color: colors.mutedForeground,
     fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center' as const,
   },
   retry: {
@@ -282,5 +282,5 @@ const styles = {
     paddingHorizontal: 16,
     paddingVertical: 11,
   },
-  retryText: { color: colors.primaryForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  retryText: { color: colors.primaryForeground, fontFamily: 'DMSans-Medium', fontSize: 16 },
 } as const;

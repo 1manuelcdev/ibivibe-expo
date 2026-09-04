@@ -200,7 +200,7 @@ const styles = {
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
   section: { borderTopColor: colors.border, borderTopWidth: 1, gap: 2, paddingTop: 14 },
   sectionHeader: {
     alignItems: 'center' as const,
