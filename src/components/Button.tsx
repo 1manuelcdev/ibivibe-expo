@@ -28,7 +28,7 @@ export function Button({ children, className, disabled, labelClassName, style, v
         ]}
       >
         {typeof children === 'string' ? (
-          <Text className={`font-dm-semibold text-sm ${isPrimary ? 'text-primary-foreground' : 'text-foreground'} ${labelClassName ?? ''}`}>
+          <Text className={`font-dm-semibold text-base ${isPrimary ? 'text-primary-foreground' : 'text-foreground'} ${labelClassName ?? ''}`}>
             {children}
           </Text>
         ) : (
