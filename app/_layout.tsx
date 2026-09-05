@@ -1,4 +1,3 @@
-import '../global.css';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
