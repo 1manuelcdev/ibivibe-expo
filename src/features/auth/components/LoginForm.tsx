@@ -43,7 +43,6 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                   autoCapitalize="none"
                   autoComplete="email"
                   error={fieldState.error?.message}
-                  inputStyle={styles.input}
                   keyboardType="email-address"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -63,7 +62,6 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
                   autoCapitalize="none"
                   autoComplete="password"
                   error={fieldState.error?.message}
-                  inputStyle={styles.input}
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={submit}
@@ -93,5 +91,5 @@ export function LoginForm({ initialEmail = '' }: LoginFormProps) {
 }
 
 const styles = {
-  container: { flex: 1, paddingHorizontal: spacing.screen, paddingTop: 16 }, header: { height: 40, justifyContent: 'center' as const }, backButton: { alignItems: 'center' as const, height: 40, justifyContent: 'center' as const, width: 40 }, main: { gap: 24, paddingTop: 24 }, heading: { gap: 8 }, eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 }, title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 }, form: { gap: 24 }, inputs: { gap: 12 }, input: { height: 40 }, forgotPassword: { alignSelf: 'flex-start' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 }, forgotPasswordLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 }, submit: { alignItems: 'center' as const, backgroundColor: colors.primary, borderRadius: radius.button, height: 48, justifyContent: 'center' as const }, submitLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 16 }, registerButton: { alignItems: 'center' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 }, registerLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 }, pressed: { opacity: 0.75 },
+  container: { flex: 1, paddingHorizontal: spacing.screen, paddingTop: 16 }, header: { height: 40, justifyContent: 'center' as const }, backButton: { alignItems: 'center' as const, height: 40, justifyContent: 'center' as const, width: 40 }, main: { gap: 24, paddingTop: 24 }, heading: { gap: 8 }, eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 }, title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24, lineHeight: 30 }, form: { gap: 24 }, inputs: { gap: 12 }, forgotPassword: { alignSelf: 'flex-start' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 }, forgotPasswordLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 }, submit: { alignItems: 'center' as const, backgroundColor: colors.primary, borderRadius: radius.button, height: 48, justifyContent: 'center' as const }, submitLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 16 }, registerButton: { alignItems: 'center' as const, height: 32, justifyContent: 'center' as const, paddingHorizontal: 8 }, registerLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 }, pressed: { opacity: 0.75 },
 } as const;
