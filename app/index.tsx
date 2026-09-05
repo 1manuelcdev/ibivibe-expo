@@ -15,7 +15,7 @@ export default function Index() {
 
   if (status === 'boot') {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-[#0A0A0A]">
+      <SafeAreaView style={{ alignItems: 'center', backgroundColor: '#0A0A0A', flex: 1, justifyContent: 'center' }}>
         <ActivityIndicator />
       </SafeAreaView>
     );
