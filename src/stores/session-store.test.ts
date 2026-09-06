@@ -90,6 +90,38 @@ describe('session store', () => {
     });
   });
 
+  it('takes a verified account without onboarding to the authenticated app state after login', async () => {
+    mocks.login.mockResolvedValue({
+      access_token: 'new-access',
+      account: verifiedAccount,
+      refresh_token: 'new-refresh',
+    });
+
+    await useSessionStore.getState().login({
+      email: verifiedAccount.email,
+      password: 'password123',
+    });
+
+    expect(mocks.login).toHaveBeenCalledWith({
+      email: verifiedAccount.email,
+      password: 'password123',
+    });
+    expect(useSessionStore.getState()).toMatchObject({
+      account: verifiedAccount,
+      status: 'authenticated',
+    });
+  });
+
+  it('clears secure credentials when restoring an invalid session', async () => {
+    mocks.get.mockResolvedValue({ accessToken: 'access', refreshToken: 'refresh' });
+    mocks.getMe.mockRejectedValue(new Error('Unauthorized'));
+
+    await useSessionStore.getState().restoreSession();
+
+    expect(mocks.clear).toHaveBeenCalledOnce();
+    expect(useSessionStore.getState()).toMatchObject({ account: null, status: 'anonymous' });
+  });
+
   it('marks a newly registered account as pending before it can reach the home screen', async () => {
     mocks.register.mockResolvedValue({
       access_token: 'new-access',
