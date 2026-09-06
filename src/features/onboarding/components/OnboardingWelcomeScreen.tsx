@@ -34,9 +34,7 @@ export function OnboardingWelcomeScreen({ variant }: { variant: 'business' | 'us
           accessibilityRole="button"
           onPress={() =>
             router.push(
-              isBusiness
-                ? '/(onboarding)/business/data'
-                : '/(onboarding)/user/businesses',
+              isBusiness ? '/(onboarding)/business/data' : '/(onboarding)/user/businesses',
             )
           }
           style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
@@ -50,13 +48,31 @@ export function OnboardingWelcomeScreen({ variant }: { variant: 'business' | 'us
 
 const styles = {
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { flex: 1, gap: 32, paddingBottom: 24, paddingHorizontal: 24, paddingTop: 31 },
+  content: { flex: 1, gap: 32, paddingBottom: 24, paddingHorizontal: 16, paddingTop: 31 },
   main: { alignItems: 'center' as const, flex: 1, gap: 16, justifyContent: 'center' as const },
   illustration: { height: 249, width: 249 },
   copy: { alignItems: 'center' as const, gap: 8 },
-  title: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 24, textAlign: 'center' as const },
-  description: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 16, lineHeight: 23, textAlign: 'center' as const },
-  primaryButton: { alignItems: 'center' as const, backgroundColor: colors.primary, borderRadius: 24, height: 48, justifyContent: 'center' as const, width: '100%' as const },
+  title: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 24,
+    textAlign: 'center' as const,
+  },
+  description: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 16,
+    lineHeight: 23,
+    textAlign: 'center' as const,
+  },
+  primaryButton: {
+    alignItems: 'center' as const,
+    backgroundColor: colors.primary,
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center' as const,
+    width: '100%' as const,
+  },
   primaryLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
   pressed: { opacity: 0.8 },
 } as const;

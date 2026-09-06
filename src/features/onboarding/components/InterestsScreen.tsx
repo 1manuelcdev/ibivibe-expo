@@ -25,7 +25,7 @@ export function InterestsScreen({ type }: { type: InterestType }) {
   const completeOnboarding = useSessionStore((state) => state.completeOnboarding);
   const updateAccount = useSessionStore((state) => state.updateAccount);
   const { tagGroups, tags } = useOnboardingInterestsData();
-  const previous = (account as (typeof account & AccountWithInterests))?.interests;
+  const previous = (account as typeof account & AccountWithInterests)?.interests;
   const [selected, setSelected] = useState<string[]>(previous?.[type] ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const copy = screenCopy[type];
@@ -38,12 +38,18 @@ export function InterestsScreen({ type }: { type: InterestType }) {
       name: group.name,
       tags: loadedTags.filter((tag) => tag.group_id === group.id),
     }));
-    const ungrouped = loadedTags.filter((tag) => !loadedGroups.some((group) => group.id === tag.group_id));
-    return ungrouped.length ? [...knownGroups, { id: 'other', name: 'Outros', tags: ungrouped }] : knownGroups;
+    const ungrouped = loadedTags.filter(
+      (tag) => !loadedGroups.some((group) => group.id === tag.group_id),
+    );
+    return ungrouped.length
+      ? [...knownGroups, { id: 'other', name: 'Outros', tags: ungrouped }]
+      : knownGroups;
   }, [tagGroups.data, tags.data]);
 
   function toggle(tagId: string) {
-    setSelected((current) => (current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId]));
+    setSelected((current) =>
+      current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
+    );
   }
 
   async function save(next: InterestType, nextSelection: string[]) {
@@ -70,7 +76,10 @@ export function InterestsScreen({ type }: { type: InterestType }) {
         router.replace('/(app)/home');
       }
     } catch {
-      Alert.alert('Não foi possível salvar seus interesses', 'Tente novamente em alguns instantes.');
+      Alert.alert(
+        'Não foi possível salvar seus interesses',
+        'Tente novamente em alguns instantes.',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -86,7 +95,11 @@ export function InterestsScreen({ type }: { type: InterestType }) {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={styles.backButton}>
+        <Pressable
+          accessibilityLabel="Voltar"
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Ionicons color={colors.foreground} name="arrow-back" size={24} />
         </Pressable>
         <View style={styles.steps}>
@@ -101,7 +114,9 @@ export function InterestsScreen({ type }: { type: InterestType }) {
         </View>
         <View style={styles.progressRow}>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressValue, { width: `${Math.min(100, selected.length * 16)}%` }]} />
+            <View
+              style={[styles.progressValue, { width: `${Math.min(100, selected.length * 16)}%` }]}
+            />
           </View>
           <Text style={styles.count}>{selected.length} selecionada(s)</Text>
           <Ionicons color={colors.mutedForeground} name="help-circle-outline" size={17} />
@@ -113,7 +128,12 @@ export function InterestsScreen({ type }: { type: InterestType }) {
             <Text style={styles.groupTitle}>{group.name}</Text>
             <View style={styles.chips}>
               {group.tags.map((tag) => (
-                <InterestChip key={tag.id} selected={selected.includes(tag.id)} tag={tag} onPress={() => toggle(tag.id)} />
+                <InterestChip
+                  key={tag.id}
+                  selected={selected.includes(tag.id)}
+                  tag={tag}
+                  onPress={() => toggle(tag.id)}
+                />
               ))}
             </View>
           </View>
@@ -123,17 +143,36 @@ export function InterestsScreen({ type }: { type: InterestType }) {
         <Pressable disabled={isSaving} onPress={skip} style={styles.ghostButton}>
           <Text style={styles.ghostLabel}>Pular</Text>
         </Pressable>
-        <Pressable disabled={isSaving || !selected.length} onPress={() => void continueFlow()} style={[styles.primaryButton, (!selected.length || isSaving) && styles.disabledButton]}>
-          <Text style={styles.primaryLabel}>{isSaving ? 'Salvando...' : type === 'events' ? 'Finalizar' : 'Continuar'}</Text>
+        <Pressable
+          disabled={isSaving || !selected.length}
+          onPress={() => void continueFlow()}
+          style={[styles.primaryButton, (!selected.length || isSaving) && styles.disabledButton]}
+        >
+          <Text style={styles.primaryLabel}>
+            {isSaving ? 'Salvando...' : type === 'events' ? 'Finalizar' : 'Continuar'}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
-function InterestChip({ onPress, selected, tag }: { onPress: () => void; selected: boolean; tag: OnboardingTag }) {
+function InterestChip({
+  onPress,
+  selected,
+  tag,
+}: {
+  onPress: () => void;
+  selected: boolean;
+  tag: OnboardingTag;
+}) {
   return (
-    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}>
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected }}
+      onPress={onPress}
+      style={[styles.chip, selected && styles.chipSelected]}
+    >
       {selected ? <Ionicons color={colors.primaryForeground} name="checkmark" size={14} /> : null}
       <Text style={[styles.chipLabel, selected && styles.chipLabelSelected]}>{tag.name}</Text>
     </Pressable>
@@ -142,9 +181,25 @@ function InterestChip({ onPress, selected, tag }: { onPress: () => void; selecte
 
 const styles = {
   screen: { backgroundColor: colors.background, flex: 1 },
-  header: { alignItems: 'center' as const, flexDirection: 'row' as const, paddingHorizontal: 24, paddingTop: 12 },
-  backButton: { alignItems: 'center' as const, height: 36, justifyContent: 'center' as const, width: 36 },
-  steps: { flex: 1, flexDirection: 'row' as const, gap: 12, justifyContent: 'center' as const, marginRight: 36 },
+  header: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  backButton: {
+    alignItems: 'center' as const,
+    height: 36,
+    justifyContent: 'center' as const,
+    width: 36,
+  },
+  steps: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    gap: 12,
+    justifyContent: 'center' as const,
+    marginRight: 36,
+  },
   activeStep: { backgroundColor: colors.foreground, borderRadius: 8, height: 8, width: 8 },
   inactiveStep: { backgroundColor: colors.border, borderRadius: 8, height: 8, width: 8 },
   content: { gap: 24, padding: 24, paddingBottom: 12 },
@@ -152,7 +207,13 @@ const styles = {
   eyebrow: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 16 },
   title: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 24 },
   progressRow: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 10 },
-  progressTrack: { backgroundColor: colors.mutedForeground, borderRadius: 12, flex: 1, height: 4, overflow: 'hidden' as const },
+  progressTrack: {
+    backgroundColor: colors.mutedForeground,
+    borderRadius: 12,
+    flex: 1,
+    height: 4,
+    overflow: 'hidden' as const,
+  },
   progressValue: { backgroundColor: colors.primary, borderRadius: 12, height: 4, minWidth: 0 },
   count: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 14 },
   loader: { marginTop: 24 },
@@ -160,14 +221,35 @@ const styles = {
   group: { gap: 12 },
   groupTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
   chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8 },
-  chip: { alignItems: 'center' as const, backgroundColor: '#27272A', borderRadius: 10, flexDirection: 'row' as const, gap: 4, minHeight: 36, paddingHorizontal: 12, paddingVertical: 8 },
+  chip: {
+    alignItems: 'center' as const,
+    backgroundColor: '#27272A',
+    borderRadius: 10,
+    flexDirection: 'row' as const,
+    gap: 4,
+    minHeight: 36,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
   chipSelected: { backgroundColor: colors.primary },
   chipLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 14 },
   chipLabelSelected: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold' },
   footer: { flexDirection: 'row' as const, gap: 10, padding: 24, paddingTop: 12 },
-  ghostButton: { alignItems: 'center' as const, flex: 1, height: 48, justifyContent: 'center' as const },
+  ghostButton: {
+    alignItems: 'center' as const,
+    flex: 1,
+    height: 48,
+    justifyContent: 'center' as const,
+  },
   ghostLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
-  primaryButton: { alignItems: 'center' as const, backgroundColor: colors.primary, borderRadius: 24, flex: 1, height: 48, justifyContent: 'center' as const },
+  primaryButton: {
+    alignItems: 'center' as const,
+    backgroundColor: colors.primary,
+    borderRadius: 24,
+    flex: 1,
+    height: 48,
+    justifyContent: 'center' as const,
+  },
   disabledButton: { opacity: 0.45 },
   primaryLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 14 },
 } as const;
