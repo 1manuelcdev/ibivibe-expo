@@ -58,6 +58,9 @@ export const detailApi = {
     return (await apiClient.get<EventDetail>(`/events/${id}`)).data;
   },
   async business(id: string) {
-    return (await apiClient.get<BusinessDetail>(`/businesses/${id}/public-profile`)).data;
+    return (await apiClient.get<BusinessDetail>(`/businesses/${id}`)).data;
+  },
+  async businessMedia(id: string) {
+    return (await apiClient.get<DetailMedia[]>(`/businesses/${id}/media`)).data;
   },
 };
