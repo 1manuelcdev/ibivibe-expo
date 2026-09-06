@@ -19,6 +19,7 @@ import type {
 } from '@/features/details/detail-api';
 import { useDetailViewModel } from '@/features/details/viewmodels/useDetailViewModel';
 import { useFavoritesViewModel } from '@/features/favorites/viewmodels/useFavoritesViewModel';
+import { ReviewSection } from '@/features/reviews/components/ReviewSection';
 import { colors } from '@/theme/tokens';
 
 type Kind = 'city' | 'event' | 'business';
@@ -176,6 +177,7 @@ function EventBody({ data }: { data: EventDetail }) {
     <View style={styles.body}>
       <Info icon="calendar-outline" text={formatDate(data.start_date, data.end_date)} />
       <Description text={data.description} />
+      <ReviewSection entityId={data.id} kind="event" />
       <SectionTitle text="Mais informações" />
     </View>
   );
@@ -204,8 +206,6 @@ function BusinessDetailPage({
   const title = data.commercial_name ?? data.name ?? 'Empresa';
   const slug = title.toLocaleLowerCase('pt-BR').replaceAll(/\s+/g, '-');
   const description = data.bio?.trim() || data.description?.trim() || 'Sem descrição disponível.';
-  const rating = data.reviews?.average_rating ?? 0;
-  const totalReviews = data.reviews?.total_reviews ?? 0;
   const contactRows = [
     data.contact?.phone && { icon: 'call-outline' as const, text: data.contact.phone },
     data.contact?.whatsapp && { icon: 'logo-whatsapp' as const, text: data.contact.whatsapp },
@@ -278,30 +278,7 @@ function BusinessDetailPage({
           </View>
         </ScrollView>
 
-        <View style={styles.reviewSection}>
-          <Text style={styles.reviewTitle}>Avaliações</Text>
-          <View style={styles.reviewSummary}>
-            <View style={styles.ratingRow}>
-              <Text style={styles.ratingValue}>{rating.toFixed(1)}</Text>
-              <View style={styles.stars}>
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <Ionicons
-                    color={value <= Math.round(rating) ? '#86EFAC' : '#71717A'}
-                    key={value}
-                    name="star"
-                    size={19}
-                  />
-                ))}
-              </View>
-            </View>
-            <View style={styles.reviewButton}>
-              <Text style={styles.reviewButtonText}>Avaliar</Text>
-            </View>
-          </View>
-          <Text style={styles.reviewCount}>
-            {totalReviews === 1 ? '1 avaliação' : `${totalReviews} avaliações`}
-          </Text>
-        </View>
+        <ReviewSection entityId={data.id} kind="business" />
 
         {contactRows.length > 0 ||
         data.locations?.length ||
