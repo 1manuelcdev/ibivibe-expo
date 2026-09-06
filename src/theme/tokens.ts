@@ -8,7 +8,7 @@ export const colors = {
 } as const;
 
 export const spacing = {
-  screen: 24,
+  screen: 16,
   section: 32,
   content: 24,
   control: 16,
