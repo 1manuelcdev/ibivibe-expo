@@ -15,6 +15,12 @@ import {
   type ViewStyle,
   View,
 } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { LocationSheet } from '@/features/home/components/LocationSheet';
 import type { HomeCity } from '@/features/home/models/home-types';
@@ -29,6 +35,8 @@ const categories = [
   'Comércio',
   'Aventura',
 ];
+
+const carouselDuration = 7000;
 
 const fallbackImages = {
   business: 'briefcase-outline' as const,
@@ -82,7 +90,7 @@ export function HomeScreen() {
     id: event.id,
     title: event.name,
     date: formatEventDate(event.start_date, event.end_date),
-    tag: event.tags?.[0] ?? 'Evento',
+    tags: event.tags?.slice(0, 3) ?? ['Evento'],
     image: event.cover_img_url,
   }));
   const businessItems = businessesQuery.data?.slice(0, 5).map((business) => ({
@@ -114,15 +122,17 @@ export function HomeScreen() {
         </Pressable>
         <SponsoredHighlights cities={citiesQuery.data ?? []} />
         <Categories />
-        <Section title="Acontecendo agora" onSeeAll={() => router.push('/(app)/events')}>
+        <Section title="Acontecendo perto de você" onSeeAll={() => router.push('/(app)/events')}>
           <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
-            {eventItems?.map((event) => (
-              <EventCard
-                key={event.id}
-                {...event}
-                onPress={() => router.push(`/(app)/events/${event.id}`)}
-              />
-            ))}
+            <HorizontalCards>
+              {eventItems?.map((event) => (
+                <EventCard
+                  key={event.id}
+                  {...event}
+                  onPress={() => router.push(`/(app)/events/${event.id}`)}
+                />
+              ))}
+            </HorizontalCards>
           </HomeSectionState>
         </Section>
         <Section
@@ -130,13 +140,15 @@ export function HomeScreen() {
           onSeeAll={() => router.push('/(app)/businesses')}
         >
           <HomeSectionState query={businessesQuery} emptyText="Nenhuma empresa disponível agora.">
-            {businessItems?.map((business) => (
-              <BusinessCard
-                key={business.id}
-                {...business}
-                onPress={() => router.push(`/(app)/businesses/${business.id}`)}
-              />
-            ))}
+            <HorizontalCards>
+              {businessItems?.map((business) => (
+                <BusinessCard
+                  key={business.id}
+                  {...business}
+                  onPress={() => router.push(`/(app)/businesses/${business.id}`)}
+                />
+              ))}
+            </HorizontalCards>
           </HomeSectionState>
         </Section>
         <Section
@@ -144,13 +156,15 @@ export function HomeScreen() {
           onSeeAll={() => router.push('/(app)/cities')}
         >
           <HomeSectionState query={citiesQuery} emptyText="Nenhuma cidade disponível agora.">
-            {cityItems?.map((city) => (
-              <CityCard
-                key={city.id}
-                {...city}
-                onPress={() => router.push(`/(app)/cities/${city.id}`)}
-              />
-            ))}
+            <HorizontalCards>
+              {cityItems?.map((city) => (
+                <CityCard
+                  key={city.id}
+                  {...city}
+                  onPress={() => router.push(`/(app)/cities/${city.id}`)}
+                />
+              ))}
+            </HorizontalCards>
           </HomeSectionState>
         </Section>
       </ScrollView>
@@ -198,25 +212,33 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
   const scrollViewRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
+  const progress = useSharedValue(0);
   const { width } = useWindowDimensions();
   const carouselWidth = width - 32;
   const items = cities.slice(0, 5);
   const currentIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
 
   useEffect(() => {
-    if (isInteracting || items.length < 2 || currentIndex >= items.length - 1) return;
+    progress.set(0);
+    if (isInteracting || items.length < 2) return;
+
+    progress.set(withTiming(1, { duration: carouselDuration, easing: Easing.linear }));
 
     const interval = setInterval(() => {
-      const nextIndex = currentIndex + 1;
+      const nextIndex = (currentIndex + 1) % items.length;
       scrollViewRef.current?.scrollTo({
         animated: true,
         x: nextIndex * carouselWidth,
       });
       setActiveIndex(nextIndex);
-    }, 7000);
+    }, carouselDuration);
 
     return () => clearInterval(interval);
-  }, [carouselWidth, currentIndex, isInteracting, items.length]);
+  }, [carouselWidth, currentIndex, isInteracting, items.length, progress]);
+
+  const activeDotStyle = useAnimatedStyle(() => ({
+    width: 8 + progress.value * 22,
+  }));
 
   if (!items.length) return null;
 
@@ -232,7 +254,10 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
       <ScrollView
         horizontal
         onMomentumScrollEnd={handlePageChange}
-        onScrollBeginDrag={() => setIsInteracting(true)}
+        onScrollBeginDrag={() => {
+          setIsInteracting(true);
+          progress.set(0);
+        }}
         pagingEnabled
         ref={scrollViewRef}
         showsHorizontalScrollIndicator={false}
@@ -250,19 +275,24 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
             />
             <View style={styles.bannerOverlay}>
               <Text style={styles.bannerEyebrow}>Descubra a serra</Text>
-              <Text style={styles.bannerTitle}>{city.name}</Text>
+              <Text numberOfLines={1} style={styles.bannerTitle}>
+                {city.name}
+              </Text>
             </View>
           </Pressable>
         ))}
       </ScrollView>
       {items.length > 1 && (
         <View style={styles.bannerDots}>
-          {items.map((city, index) => (
-            <View
-              key={city.id}
-              style={index === currentIndex ? styles.bannerDotActive : styles.bannerDot}
-            />
-          ))}
+          {items.map((city, index) =>
+            index === currentIndex ? (
+              <View key={city.id} style={styles.bannerDotTrack}>
+                <Animated.View style={[styles.bannerDotActive, activeDotStyle]} />
+              </View>
+            ) : (
+              <View key={city.id} style={styles.bannerDot} />
+            ),
+          )}
         </View>
       )}
     </View>
@@ -334,28 +364,40 @@ function Section({
   );
 }
 
+function HorizontalCards({ children }: { children: React.ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      contentContainerStyle={styles.horizontalCards}
+      showsHorizontalScrollIndicator={false}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
 function EventCard({
   date,
   image,
   onPress,
-  tag,
+  tags,
   title,
 }: {
   date: string;
   image?: string | null;
   onPress?: () => void;
-  tag: string;
+  tags: string[];
   title: string;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.card}>
+    <Pressable onPress={onPress} style={styles.horizontalCard}>
       <RemoteImage icon={fallbackImages.event} source={image} style={styles.thumb} />
       <View style={styles.cardBody}>
-        <Text numberOfLines={2} style={styles.cardTitle}>
+        <Text numberOfLines={1} style={styles.cardTitle}>
           {title}
         </Text>
         <Text style={styles.cardMeta}>{date}</Text>
-        <Badge label={tag} />
+        <EntityTags tags={tags} />
       </View>
     </Pressable>
   );
@@ -373,17 +415,13 @@ function BusinessCard({
   title: string;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.card}>
+    <Pressable onPress={onPress} style={styles.horizontalCard}>
       <RemoteImage icon={fallbackImages.business} source={image} style={styles.thumb} />
       <View style={styles.cardBody}>
-        <Text numberOfLines={2} style={styles.cardTitle}>
+        <Text numberOfLines={1} style={styles.cardTitle}>
           {title}
         </Text>
-        <View style={styles.badgeRow}>
-          {tags.map((tag) => (
-            <Badge key={tag} label={tag} />
-          ))}
-        </View>
+        <EntityTags tags={tags} />
       </View>
     </Pressable>
   );
@@ -404,11 +442,7 @@ function CityCard({
     <Pressable onPress={onPress} style={styles.cityCard}>
       <RemoteImage icon={fallbackImages.city} source={image} style={styles.cityImage} />
       <Text style={styles.cardTitle}>{title}</Text>
-      <View style={styles.badgeRow}>
-        {tags.map((tag) => (
-          <Badge key={tag} label={tag} />
-        ))}
-      </View>
+      <EntityTags tags={tags} />
     </Pressable>
   );
 }
@@ -456,6 +490,19 @@ function Badge({ label }: { label: string }) {
   );
 }
 
+function EntityTags({ tags }: { tags: string[] }) {
+  const [firstTag, ...remainingTags] = tags;
+
+  return (
+    <View style={styles.badgeRow}>
+      {firstTag ? <Badge label={firstTag} /> : null}
+      {remainingTags.length ? (
+        <Text style={styles.extraTags}>{`(+${remainingTags.length} tags)`}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 function formatEventDate(startDate?: string, endDate?: string) {
   if (!startDate) return 'Data a confirmar';
 
@@ -481,7 +528,7 @@ const styles = {
     maxWidth: '80%' as const,
     paddingVertical: 8,
   },
-  cityName: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 18 },
+  cityName: { color: colors.foreground, fontFamily: 'DMSans-Bold', fontSize: 18 },
   notificationButton: {
     alignItems: 'center' as const,
     height: 40,
@@ -492,7 +539,8 @@ const styles = {
   searchButton: {
     alignItems: 'center' as const,
     borderColor: colors.border,
-    borderRadius: 24,
+    backgroundColor: '#27272A',
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row' as const,
     gap: 10,
@@ -502,16 +550,16 @@ const styles = {
   searchText: {
     color: colors.mutedForeground,
     flex: 1,
-    fontFamily: 'DMSans-Regular',
-    fontSize: 14,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 16,
   },
   bannerWrap: {
-    borderRadius: 12,
-    height: 230,
+    borderRadius: 16,
+    height: 226,
     overflow: 'hidden' as const,
     position: 'relative' as const,
   },
-  carouselPage: { height: 230 },
+  carouselPage: { height: 226 },
   banner: { height: '100%' as const, width: '100%' as const },
   bannerOverlay: {
     backgroundColor: 'rgba(0,0,0,0.38)',
@@ -522,23 +570,38 @@ const styles = {
     right: 0,
   },
   bannerEyebrow: { color: '#E4E4E7', fontFamily: 'DMSans-Medium', fontSize: 13 },
-  bannerTitle: { color: colors.foreground, fontFamily: 'DMSans-Bold', fontSize: 24 },
+  bannerTitle: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Bold',
+    fontSize: 20,
+    paddingRight: 84,
+  },
   bannerDots: {
-    bottom: 12,
+    backgroundColor: colors.background,
+    borderRadius: 50,
+    bottom: 14,
     flexDirection: 'row' as const,
     gap: 6,
     position: 'absolute' as const,
+    padding: 4,
     right: 14,
   },
-  bannerDotActive: { backgroundColor: colors.primary, borderRadius: 4, height: 8, width: 8 },
+  bannerDotTrack: {
+    backgroundColor: colors.mutedForeground,
+    borderRadius: 4,
+    height: 8,
+    overflow: 'hidden' as const,
+    width: 30,
+  },
+  bannerDotActive: { backgroundColor: colors.foreground, borderRadius: 4, height: 8 },
   bannerDot: {
-    backgroundColor: colors.foreground,
+    backgroundColor: colors.mutedForeground,
     borderRadius: 4,
     height: 8,
     opacity: 0.65,
     width: 8,
   },
-  sectionBlock: { gap: 8 },
+  sectionBlock: { gap: 16 },
   sectionHeader: {
     alignItems: 'center' as const,
     flexDirection: 'row' as const,
@@ -550,59 +613,64 @@ const styles = {
     fontSize: 16,
     lineHeight: 21,
   },
-  seeAll: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
-  categoryList: { gap: 6 },
+  seeAll: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 12 },
+  categoryList: { gap: 8 },
   category: {
     borderColor: colors.border,
+    backgroundColor: '#27272A',
     borderRadius: radius.button,
     borderWidth: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  categoryText: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  categoryText: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
   cards: { gap: 16 },
+  horizontalCards: { gap: 12 },
   sectionState: { alignSelf: 'flex-start' as const, paddingVertical: 12 },
   sectionStateText: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
-  card: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
+  horizontalCard: {
     borderRadius: 12,
-    borderWidth: 1,
     flexDirection: 'row' as const,
     gap: 12,
-    padding: 12,
+    padding: 8,
+    width: 260,
   },
-  thumb: { backgroundColor: colors.background, borderRadius: 8, height: 70, width: 70 },
-  cardBody: { flex: 1, gap: 6, justifyContent: 'center' as const },
+  thumb: { backgroundColor: '#27272A', borderRadius: 8, height: 80, width: 80 },
+  cardBody: { flex: 1, gap: 8, justifyContent: 'center' as const },
   cardTitle: {
     color: colors.foreground,
     fontFamily: 'DMSans-Medium',
     fontSize: 14,
-    lineHeight: 19,
+    lineHeight: 18,
   },
   cardMeta: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  badgeRow: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 4 },
+  badgeRow: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    gap: 4,
+    overflow: 'hidden' as const,
+  },
   badge: {
     alignSelf: 'flex-start' as const,
     backgroundColor: '#3F3F46',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-  },
-  badgeText: { color: '#E4E4E7', fontFamily: 'DMSans-Regular', fontSize: 11 },
-  cityCard: {
-    backgroundColor: '#27272A',
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    gap: 8,
-    padding: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  badgeText: { color: '#E4E4E7', fontFamily: 'DMSans-Medium', fontSize: 10 },
+  extraTags: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 10 },
+  cityCard: {
+    gap: 6,
+    padding: 8,
+    width: 212,
   },
   cityImage: {
     backgroundColor: colors.background,
     borderRadius: 8,
-    height: 140,
-    width: '100%' as const,
+    height: 100,
+    width: 196,
   },
   mediaPlaceholder: {
     alignItems: 'center' as const,
