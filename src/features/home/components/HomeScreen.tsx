@@ -1,19 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   type ImageStyle,
   Pressable,
   ScrollView,
   type StyleProp,
   Text,
+  useWindowDimensions,
   type ViewStyle,
   View,
 } from 'react-native';
 
-import { useSessionStore } from '@/stores/session-store';
 import { LocationSheet } from '@/features/home/components/LocationSheet';
+import type { HomeCity } from '@/features/home/models/home-types';
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
 import { colors, radius } from '@/theme/tokens';
 
@@ -24,58 +28,6 @@ const categories = [
   'Banhos',
   'Comércio',
   'Aventura',
-];
-const events = [
-  {
-    id: undefined,
-    title: 'Acontecendo agora',
-    date: 'Hoje',
-    tag: 'Evento',
-    image: 'https://cdn.ibivibe.com.br/cities/ubajara.png',
-  },
-  {
-    title: 'Programação da Ibiapaba',
-    date: 'Esta semana',
-    tag: 'Cultura',
-    image: 'https://cdn.ibivibe.com.br/cities/tiangua.png',
-  },
-  {
-    title: 'Experiências para descobrir',
-    date: 'Este mês',
-    tag: 'Lazer',
-    image: 'https://cdn.ibivibe.com.br/cities/ubajara.png',
-  },
-];
-const businesses = [
-  {
-    id: undefined,
-    title: 'Conheça negócios locais',
-    tags: ['Comércio', 'Serviços'],
-    image: 'https://cdn.ibivibe.com.br/cities/tiangua.png',
-  },
-  {
-    title: 'Sabores da Ibiapaba',
-    tags: ['Restaurante', 'Gastronomia'],
-    image: 'https://cdn.ibivibe.com.br/cities/ubajara.png',
-  },
-  {
-    title: 'Hospedagens para sua viagem',
-    tags: ['Hotel', 'Turismo'],
-    image: 'https://cdn.ibivibe.com.br/cities/tiangua.png',
-  },
-];
-const cities = [
-  {
-    id: undefined,
-    title: 'Ubajara',
-    tags: ['Natureza', 'Turismo'],
-    image: 'https://cdn.ibivibe.com.br/cities/ubajara.png',
-  },
-  {
-    title: 'Tianguá',
-    tags: ['Serra', 'Comércio'],
-    image: 'https://cdn.ibivibe.com.br/cities/tiangua.png',
-  },
 ];
 
 const fallbackImages = {
@@ -120,42 +72,39 @@ function normalizeImageUrl(value?: string | null) {
 export function HomeScreen() {
   const router = useRouter();
   const [locationSheetVisible, setLocationSheetVisible] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Selecione uma cidade');
+  const [selectedCity, setSelectedCity] = useState<HomeCity | null>(null);
   const {
     businesses: businessesQuery,
     cities: citiesQuery,
     events: eventsQuery,
   } = useHomeViewModel();
-  const eventItems = eventsQuery.data
-    ? eventsQuery.data.slice(0, 3).map((event) => ({
-        id: event.id,
-        title: event.name,
-        date: formatEventDate(event.start_date, event.end_date),
-        tag: event.tags?.[0] ?? 'Evento',
-        image: event.cover_img_url,
-      }))
-    : events;
-  const businessItems = businessesQuery.data
-    ? businessesQuery.data.slice(0, 5).map((business) => ({
-        id: business.id,
-        title: business.name ?? business.commercial_name ?? 'Empresa',
-        tags: business.tags?.slice(0, 2) ?? ['Negócio local'],
-        image: business.avatar_url,
-      }))
-    : businesses;
-  const cityItems = citiesQuery.data
-    ? citiesQuery.data.slice(0, 5).map((city) => ({
-        id: city.id,
-        title: city.name,
-        tags: city.tags?.slice(0, 2) ?? ['Ibiapaba'],
-        image: city.cover_img_url,
-      }))
-    : cities;
+  const eventItems = eventsQuery.data?.slice(0, 3).map((event) => ({
+    id: event.id,
+    title: event.name,
+    date: formatEventDate(event.start_date, event.end_date),
+    tag: event.tags?.[0] ?? 'Evento',
+    image: event.cover_img_url,
+  }));
+  const businessItems = businessesQuery.data?.slice(0, 5).map((business) => ({
+    id: business.id,
+    title: business.name ?? business.commercial_name ?? 'Empresa',
+    tags: business.tags?.slice(0, 2) ?? ['Negócio local'],
+    image: business.avatar_url,
+  }));
+  const cityItems = citiesQuery.data?.slice(0, 5).map((city) => ({
+    id: city.id,
+    title: city.name,
+    tags: city.tags?.slice(0, 2) ?? ['Ibiapaba'],
+    image: city.cover_img_url,
+  }));
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <HomeHeader city={selectedCity} onLocationPress={() => setLocationSheetVisible(true)} />
+        <HomeHeader
+          city={selectedCity?.name ?? 'Toda a Ibiapaba'}
+          onLocationPress={() => setLocationSheetVisible(true)}
+        />
         <Pressable
           onPress={() => router.push('/(app)/search/expanded')}
           style={styles.searchButton}
@@ -163,51 +112,59 @@ export function HomeScreen() {
           <Ionicons color={colors.mutedForeground} name="search-outline" size={20} />
           <Text style={styles.searchText}>O que vamos fazer hoje na Ibiapaba?</Text>
         </Pressable>
-        <SponsoredHighlights />
+        <SponsoredHighlights cities={citiesQuery.data ?? []} />
         <Categories />
         <Section title="Acontecendo agora" onSeeAll={() => router.push('/(app)/events')}>
-          {eventItems.map((event) => (
-            <EventCard
-              key={event.title}
-              {...event}
-              onPress={event.id ? () => router.push(`/(app)/events/${event.id}`) : undefined}
-            />
-          ))}
+          <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
+            {eventItems?.map((event) => (
+              <EventCard
+                key={event.id}
+                {...event}
+                onPress={() => router.push(`/(app)/events/${event.id}`)}
+              />
+            ))}
+          </HomeSectionState>
         </Section>
         <Section
           title="Explore as empresas da Ibiapaba"
           onSeeAll={() => router.push('/(app)/businesses')}
         >
-          {businessItems.map((business) => (
-            <BusinessCard
-              key={business.title}
-              {...business}
-              onPress={
-                business.id ? () => router.push(`/(app)/businesses/${business.id}`) : undefined
-              }
-            />
-          ))}
+          <HomeSectionState query={businessesQuery} emptyText="Nenhuma empresa disponível agora.">
+            {businessItems?.map((business) => (
+              <BusinessCard
+                key={business.id}
+                {...business}
+                onPress={() => router.push(`/(app)/businesses/${business.id}`)}
+              />
+            ))}
+          </HomeSectionState>
         </Section>
         <Section
           title="Explore as cidades da Ibiapaba"
           onSeeAll={() => router.push('/(app)/cities')}
         >
-          {cityItems.map((city) => (
-            <CityCard
-              key={city.title}
-              {...city}
-              onPress={city.id ? () => router.push(`/(app)/cities/${city.id}`) : undefined}
-            />
-          ))}
+          <HomeSectionState query={citiesQuery} emptyText="Nenhuma cidade disponível agora.">
+            {cityItems?.map((city) => (
+              <CityCard
+                key={city.id}
+                {...city}
+                onPress={() => router.push(`/(app)/cities/${city.id}`)}
+              />
+            ))}
+          </HomeSectionState>
         </Section>
       </ScrollView>
       <LocationSheet
+        cities={citiesQuery.data ?? []}
+        error={citiesQuery.isError}
+        isLoading={citiesQuery.isLoading}
         onClose={() => setLocationSheetVisible(false)}
+        onRetry={() => citiesQuery.refetch()}
         onSelect={(city) => {
           setSelectedCity(city);
           setLocationSheetVisible(false);
         }}
-        selectedCity={selectedCity}
+        selectedCityId={selectedCity?.id ?? null}
         visible={locationSheetVisible}
       />
     </View>
@@ -216,7 +173,6 @@ export function HomeScreen() {
 
 function HomeHeader({ city, onLocationPress }: { city: string; onLocationPress: () => void }) {
   const router = useRouter();
-  const logout = useSessionStore((state) => state.logout);
 
   return (
     <View style={styles.header}>
@@ -227,39 +183,114 @@ function HomeHeader({ city, onLocationPress }: { city: string; onLocationPress: 
         <Ionicons color={colors.foreground} name="chevron-down" size={18} />
       </Pressable>
       <Pressable
-        accessibilityLabel="Notificações"
-        onPress={async () => {
-          // TEMPORÁRIO: o sino ainda não possui tela de notificações; usa logout para teste.
-          await logout();
-          router.replace('/');
-        }}
+        accessibilityLabel="Conta"
+        onPress={() => router.push('/(app)/accounts')}
         style={styles.notificationButton}
       >
-        <Ionicons color={colors.foreground} name="notifications-outline" size={24} />
-        <View style={styles.notificationDot} />
+        <Ionicons color={colors.foreground} name="person-circle-outline" size={26} />
       </Pressable>
     </View>
   );
 }
 
-function SponsoredHighlights() {
+function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
+  const router = useRouter();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isInteracting, setIsInteracting] = useState(false);
+  const { width } = useWindowDimensions();
+  const carouselWidth = width - 32;
+  const items = cities.slice(0, 5);
+  const currentIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
+
+  useEffect(() => {
+    if (isInteracting || items.length < 2 || currentIndex >= items.length - 1) return;
+
+    const interval = setInterval(() => {
+      const nextIndex = currentIndex + 1;
+      scrollViewRef.current?.scrollTo({
+        animated: true,
+        x: nextIndex * carouselWidth,
+      });
+      setActiveIndex(nextIndex);
+    }, 7000);
+
+    return () => clearInterval(interval);
+  }, [carouselWidth, currentIndex, isInteracting, items.length]);
+
+  if (!items.length) return null;
+
+  function handlePageChange(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const pageWidth = event.nativeEvent.layoutMeasurement.width;
+    if (!pageWidth) return;
+    setActiveIndex(Math.round(event.nativeEvent.contentOffset.x / pageWidth));
+    setIsInteracting(false);
+  }
+
   return (
     <View style={styles.bannerWrap}>
-      <RemoteImage
-        icon={fallbackImages.city}
-        source="https://cdn.ibivibe.com.br/cities/ubajara.png"
-        style={styles.banner}
-      />
-      <View style={styles.bannerOverlay}>
-        <Text style={styles.bannerEyebrow}>Descubra a serra</Text>
-        <Text style={styles.bannerTitle}>Ubajara</Text>
-      </View>
-      <View style={styles.bannerDots}>
-        <View style={styles.bannerDotActive} />
-        <View style={styles.bannerDot} />
-      </View>
+      <ScrollView
+        horizontal
+        onMomentumScrollEnd={handlePageChange}
+        onScrollBeginDrag={() => setIsInteracting(true)}
+        pagingEnabled
+        ref={scrollViewRef}
+        showsHorizontalScrollIndicator={false}
+      >
+        {items.map((city) => (
+          <Pressable
+            key={city.id}
+            onPress={() => router.push(`/(app)/cities/${city.id}`)}
+            style={[styles.carouselPage, { width: carouselWidth }]}
+          >
+            <RemoteImage
+              icon={fallbackImages.city}
+              source={city.cover_img_url}
+              style={styles.banner}
+            />
+            <View style={styles.bannerOverlay}>
+              <Text style={styles.bannerEyebrow}>Descubra a serra</Text>
+              <Text style={styles.bannerTitle}>{city.name}</Text>
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
+      {items.length > 1 && (
+        <View style={styles.bannerDots}>
+          {items.map((city, index) => (
+            <View
+              key={city.id}
+              style={index === currentIndex ? styles.bannerDotActive : styles.bannerDot}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
+}
+
+function HomeSectionState({
+  children,
+  emptyText,
+  query,
+}: {
+  children: React.ReactNode;
+  emptyText: string;
+  query: { isError: boolean; isLoading: boolean; refetch: () => void };
+}) {
+  if (query.isLoading)
+    return <ActivityIndicator color={colors.primary} style={styles.sectionState} />;
+  if (query.isError) {
+    return (
+      <Pressable onPress={query.refetch} style={styles.sectionState}>
+        <Text style={styles.sectionStateText}>
+          Não foi possível carregar. Tocar para tentar novamente.
+        </Text>
+      </Pressable>
+    );
+  }
+  if (!children) return <Text style={styles.sectionStateText}>{emptyText}</Text>;
+  return <>{children}</>;
 }
 
 function Categories() {
@@ -458,17 +489,6 @@ const styles = {
     position: 'relative' as const,
     width: 40,
   },
-  notificationDot: {
-    backgroundColor: colors.primary,
-    borderColor: colors.background,
-    borderRadius: 6,
-    borderWidth: 2,
-    height: 12,
-    position: 'absolute' as const,
-    right: 2,
-    top: 3,
-    width: 12,
-  },
   searchButton: {
     alignItems: 'center' as const,
     borderColor: colors.border,
@@ -491,6 +511,7 @@ const styles = {
     overflow: 'hidden' as const,
     position: 'relative' as const,
   },
+  carouselPage: { height: 230 },
   banner: { height: '100%' as const, width: '100%' as const },
   bannerOverlay: {
     backgroundColor: 'rgba(0,0,0,0.38)',
@@ -540,6 +561,8 @@ const styles = {
   },
   categoryText: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 14 },
   cards: { gap: 16 },
+  sectionState: { alignSelf: 'flex-start' as const, paddingVertical: 12 },
+  sectionStateText: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
   card: {
     backgroundColor: '#27272A',
     borderColor: colors.border,
