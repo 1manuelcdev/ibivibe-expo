@@ -18,6 +18,7 @@ import type {
   EventDetail,
 } from '@/features/details/detail-api';
 import { useDetailViewModel } from '@/features/details/viewmodels/useDetailViewModel';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { useFavoritesViewModel } from '@/features/favorites/viewmodels/useFavoritesViewModel';
 import { ReviewSection } from '@/features/reviews/components/ReviewSection';
 import { colors } from '@/theme/tokens';
@@ -110,16 +111,12 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
         />
         <View style={styles.titleRow}>
           <Text style={styles.title}>{title}</Text>
-          <Pressable
+          <FavoriteButton
             disabled={!accountId || add.isPending || remove.isPending}
+            isFavorite={isFavorite}
             onPress={toggleFavorite}
-          >
-            <Ionicons
-              color={isFavorite ? colors.primary : colors.foreground}
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={26}
-            />
-          </Pressable>
+            size={26}
+          />
         </View>
         <View style={styles.tags}>
           {(tags.length
@@ -225,18 +222,12 @@ function BusinessDetailPage({
         <Text numberOfLines={1} style={styles.businessSlug}>
           {slug}
         </Text>
-        <Pressable
-          accessibilityLabel={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+        <FavoriteButton
           disabled={disabled}
-          hitSlop={12}
-          onPress={() => void onToggleFavorite()}
-        >
-          <Ionicons
-            color={isFavorite ? colors.primary : colors.foreground}
-            name={isFavorite ? 'heart' : 'heart-outline'}
-            size={26}
-          />
-        </Pressable>
+          isFavorite={isFavorite}
+          onPress={onToggleFavorite}
+          size={26}
+        />
       </View>
       <ScrollView
         contentContainerStyle={styles.businessContent}
@@ -431,7 +422,7 @@ const styles = {
     flexDirection: 'row' as const,
     height: 56,
     justifyContent: 'space-between' as const,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
   },
   businessSlug: {
     color: colors.foreground,
