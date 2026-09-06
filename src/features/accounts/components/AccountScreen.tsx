@@ -60,6 +60,7 @@ export function AccountScreen() {
               ['storefront-outline', 'Meu negócio'],
               ['calendar-outline', 'Meus eventos'],
             ]}
+            onMyBusiness={() => router.push('/(app)/businesses/manage')}
             onDevelopment={openDevelopment}
           />
         ) : (
@@ -114,12 +115,14 @@ function Section({
   items,
   onDevelopment,
   onFavorite,
+  onMyBusiness,
   onSettings,
   title,
 }: {
   items: [keyof typeof Ionicons.glyphMap, string][];
   onDevelopment: (feature: string) => void;
   onFavorite?: () => void;
+  onMyBusiness?: () => void;
   onSettings?: () => void;
   title: string;
 }) {
@@ -135,18 +138,25 @@ function Section({
           onPress={
             label === 'Favoritos'
               ? onFavorite
-              : label === 'Configurações do aplicativo'
-                ? onSettings
-                : () => onDevelopment(label)
+              : label === 'Meu negócio'
+                ? onMyBusiness
+                : label === 'Configurações do aplicativo'
+                  ? onSettings
+                  : () => onDevelopment(label)
           }
           style={[
             styles.menuRow,
-            label !== 'Favoritos' && label !== 'Configurações do aplicativo' && styles.disabled,
+            label !== 'Favoritos' &&
+              label !== 'Meu negócio' &&
+              label !== 'Configurações do aplicativo' &&
+              styles.disabled,
           ]}
         >
           <Ionicons
             color={
-              label !== 'Favoritos' && label !== 'Configurações do aplicativo'
+              label !== 'Favoritos' &&
+              label !== 'Meu negócio' &&
+              label !== 'Configurações do aplicativo'
                 ? colors.mutedForeground
                 : colors.foreground
             }
@@ -157,6 +167,7 @@ function Section({
             style={[
               styles.menuText,
               label !== 'Favoritos' &&
+                label !== 'Meu negócio' &&
                 label !== 'Configurações do aplicativo' &&
                 styles.disabledText,
             ]}
