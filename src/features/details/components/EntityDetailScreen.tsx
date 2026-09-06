@@ -1,9 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useState } from 'react';
 
-import type { BusinessDetail, CityDetail, EventDetail } from '@/features/details/detail-api';
+import type {
+  BusinessDetail,
+  CityDetail,
+  DetailMedia,
+  EventDetail,
+} from '@/features/details/detail-api';
 import { useDetailViewModel } from '@/features/details/viewmodels/useDetailViewModel';
 import { useFavoritesViewModel } from '@/features/favorites/viewmodels/useFavoritesViewModel';
 import { colors } from '@/theme/tokens';
@@ -69,6 +82,18 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
     });
   }
 
+  if (kind === 'business') {
+    return (
+      <BusinessDetailPage
+        data={data as BusinessDetail}
+        disabled={!accountId || add.isPending || remove.isPending}
+        isFavorite={isFavorite}
+        onBack={() => router.back()}
+        onToggleFavorite={toggleFavorite}
+      />
+    );
+  }
+
   return (
     <DetailShell onBack={() => router.back()}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -107,10 +132,8 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
         </View>
         {kind === 'event' ? (
           <EventBody data={data as EventDetail} />
-        ) : kind === 'city' ? (
-          <CityBody data={data as CityDetail} />
         ) : (
-          <BusinessBody data={data as BusinessDetail} />
+          <CityBody data={data as CityDetail} />
         )}
       </ScrollView>
     </DetailShell>
@@ -165,32 +188,207 @@ function CityBody({ data }: { data: CityDetail }) {
     </View>
   );
 }
-function BusinessBody({ data }: { data: BusinessDetail }) {
+function BusinessDetailPage({
+  data,
+  disabled,
+  isFavorite,
+  onBack,
+  onToggleFavorite,
+}: {
+  data: BusinessDetail;
+  disabled: boolean;
+  isFavorite: boolean;
+  onBack: () => void;
+  onToggleFavorite: () => Promise<void>;
+}) {
+  const title = data.commercial_name ?? data.name ?? 'Empresa';
+  const slug = title.toLocaleLowerCase('pt-BR').replaceAll(/\s+/g, '-');
+  const description = data.bio?.trim() || data.description?.trim() || 'Sem descrição disponível.';
+  const rating = data.reviews?.average_rating ?? 0;
+  const totalReviews = data.reviews?.total_reviews ?? 0;
+  const contactRows = [
+    data.contact?.phone && { icon: 'call-outline' as const, text: data.contact.phone },
+    data.contact?.whatsapp && { icon: 'logo-whatsapp' as const, text: data.contact.whatsapp },
+    data.contact?.public_email && {
+      icon: 'mail-outline' as const,
+      text: data.contact.public_email,
+    },
+    data.contact?.website && { icon: 'globe-outline' as const, text: data.contact.website },
+  ].filter(Boolean) as Array<{ icon: keyof typeof Ionicons.glyphMap; text: string }>;
+
   return (
-    <View style={styles.body}>
-      <Description text={data.bio ?? data.description} />
-      {data.reviews && (
-        <Info
-          icon="star-outline"
-          text={`${(data.reviews.average_rating ?? 0).toFixed(1)} (${data.reviews.total_reviews ?? 0} avaliações)`}
-        />
-      )}
-      {data.contact?.phone && <Info icon="call-outline" text={data.contact.phone} />}
-      {data.locations?.map((location, index) => (
-        <Info
-          key={`${location.city?.name}-${index}`}
-          icon="location-outline"
-          text={`${location.city?.name ?? 'Localização'}${location.is_headquarter ? ' (matriz)' : ''}`}
-        />
-      ))}
-      {data.services && data.services.length > 0 && (
-        <>
-          <SectionTitle text="Serviços" />
-          {data.services.map((service) => (
-            <Info key={service.name} icon="storefront-outline" text={service.name} />
+    <View style={styles.screen}>
+      <View style={styles.businessHeader}>
+        <Pressable accessibilityLabel="Voltar" hitSlop={12} onPress={onBack}>
+          <Ionicons color={colors.foreground} name="arrow-back" size={25} />
+        </Pressable>
+        <Text numberOfLines={1} style={styles.businessSlug}>
+          {slug}
+        </Text>
+        <Pressable
+          accessibilityLabel={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          disabled={disabled}
+          hitSlop={12}
+          onPress={() => void onToggleFavorite()}
+        >
+          <Ionicons
+            color={isFavorite ? colors.primary : colors.foreground}
+            name={isFavorite ? 'heart' : 'heart-outline'}
+            size={26}
+          />
+        </Pressable>
+      </View>
+      <ScrollView
+        contentContainerStyle={styles.businessContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.businessProfile}>
+          {data.avatar_url ? (
+            <Image source={{ uri: data.avatar_url }} style={styles.businessAvatar} />
+          ) : (
+            <View style={styles.businessAvatar} />
+          )}
+          <View style={styles.businessProfileText}>
+            <View style={styles.businessNameRow}>
+              <Text numberOfLines={1} style={styles.businessName}>
+                {title}
+              </Text>
+              {data.is_verified ? (
+                <Ionicons color="#4ADE80" name="diamond-outline" size={16} />
+              ) : null}
+            </View>
+            <View style={styles.businessTags}>
+              {(data.tags?.length ? data.tags : ['Negócio']).slice(0, 3).map((tag) => (
+                <Text key={tag} style={styles.businessTag}>
+                  {tag}
+                </Text>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.businessDescription}>{description}</Text>
+        <BusinessMediaCarousel avatarUrl={data.avatar_url} media={data.media ?? []} />
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionScroller}>
+          <View style={styles.businessActions}>
+            <BusinessAction icon="albums-outline" label="Contatos e Redes sociais" />
+            <BusinessAction icon="time-outline" label="Horário de funcionamento" />
+            <BusinessAction icon="location-outline" label="Localização" />
+          </View>
+        </ScrollView>
+
+        <View style={styles.reviewSection}>
+          <Text style={styles.reviewTitle}>Avaliações</Text>
+          <View style={styles.reviewSummary}>
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingValue}>{rating.toFixed(1)}</Text>
+              <View style={styles.stars}>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <Ionicons
+                    color={value <= Math.round(rating) ? '#86EFAC' : '#71717A'}
+                    key={value}
+                    name="star"
+                    size={19}
+                  />
+                ))}
+              </View>
+            </View>
+            <View style={styles.reviewButton}>
+              <Text style={styles.reviewButtonText}>Avaliar</Text>
+            </View>
+          </View>
+          <Text style={styles.reviewCount}>
+            {totalReviews === 1 ? '1 avaliação' : `${totalReviews} avaliações`}
+          </Text>
+        </View>
+
+        {contactRows.length > 0 ||
+        data.locations?.length ||
+        data.hours?.length ||
+        data.services?.length ? (
+          <View style={styles.businessInfoSection}>
+            {contactRows.map((item) => (
+              <Info icon={item.icon} key={item.text} text={item.text} />
+            ))}
+            {data.hours?.some((hour) => !hour.is_closed) && (
+              <Info icon="time-outline" text="Horários disponíveis" />
+            )}
+            {data.locations?.map((location, index) => (
+              <Info
+                key={`${location.city?.name}-${index}`}
+                icon="location-outline"
+                text={`${location.city?.name ?? 'Localização'}${location.is_headquarter ? ' (matriz)' : ''}`}
+              />
+            ))}
+            {data.services?.map((service) => (
+              <Info icon="storefront-outline" key={service.name} text={service.name} />
+            ))}
+          </View>
+        ) : null}
+      </ScrollView>
+    </View>
+  );
+}
+
+function BusinessAction({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
+  return (
+    <View style={styles.businessAction}>
+      <Ionicons color={colors.mutedForeground} name={icon} size={24} />
+      <Text style={styles.businessActionText}>{label}</Text>
+    </View>
+  );
+}
+
+function BusinessMediaCarousel({
+  avatarUrl,
+  media,
+}: {
+  avatarUrl?: string | null;
+  media: DetailMedia[];
+}) {
+  const { width } = useWindowDimensions();
+  const mediaWidth = width - 32;
+  const images = media.filter((item) => item.media_type !== 'video').map((item) => item.url);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  if (!images.length && !avatarUrl) {
+    return (
+      <View style={[styles.businessMedia, styles.businessMediaFallback]}>
+        <Ionicons color={colors.mutedForeground} name="image-outline" size={44} />
+      </View>
+    );
+  }
+
+  const slides = images.length ? images : [avatarUrl!];
+  return (
+    <View style={styles.businessCarousel}>
+      <ScrollView
+        horizontal
+        onMomentumScrollEnd={(event) =>
+          setActiveIndex(Math.round(event.nativeEvent.contentOffset.x / mediaWidth))
+        }
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+      >
+        {slides.map((uri, index) => (
+          <Image
+            key={`${uri}-${index}`}
+            source={{ uri }}
+            style={[styles.businessMedia, { width: mediaWidth }]}
+          />
+        ))}
+      </ScrollView>
+      {slides.length > 1 ? (
+        <View style={styles.carouselDots}>
+          {slides.map((uri, index) => (
+            <View
+              key={`${uri}-dot`}
+              style={index === activeIndex ? styles.carouselDotActive : styles.carouselDot}
+            />
           ))}
-        </>
-      )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -251,6 +449,112 @@ const styles = {
   },
   headerSpacer: { flex: 1 },
   content: { gap: 16, paddingBottom: 32, paddingHorizontal: 16 },
+  businessHeader: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    height: 56,
+    justifyContent: 'space-between' as const,
+    paddingHorizontal: 24,
+  },
+  businessSlug: {
+    color: colors.foreground,
+    flex: 1,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 18,
+    marginHorizontal: 20,
+    textAlign: 'center' as const,
+  },
+  businessContent: { gap: 16, paddingBottom: 40, paddingHorizontal: 16, paddingTop: 24 },
+  businessProfile: { alignItems: 'flex-start' as const, flexDirection: 'row' as const, gap: 10 },
+  businessAvatar: { backgroundColor: '#4D4D56', borderRadius: 32, height: 64, width: 64 },
+  businessProfileText: { flex: 1, gap: 6, paddingTop: 1 },
+  businessNameRow: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 3 },
+  businessName: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 16,
+    maxWidth: '92%',
+  },
+  businessTags: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 4 },
+  businessTag: {
+    backgroundColor: '#27272A',
+    borderRadius: 32,
+    color: colors.foreground,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 12,
+    overflow: 'hidden' as const,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  businessDescription: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  businessCarousel: { borderRadius: 12, height: 256, overflow: 'hidden' as const },
+  businessMedia: { backgroundColor: '#27272A', borderRadius: 12, height: 256 },
+  businessMediaFallback: {
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    width: '100%' as const,
+  },
+  carouselDots: {
+    alignItems: 'center' as const,
+    bottom: 16,
+    flexDirection: 'row' as const,
+    gap: 6,
+    justifyContent: 'center' as const,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+  },
+  carouselDot: { backgroundColor: '#71717A', borderRadius: 8, height: 8, width: 10 },
+  carouselDotActive: { backgroundColor: colors.foreground, borderRadius: 8, height: 8, width: 30 },
+  actionScroller: { marginHorizontal: -16 },
+  businessActions: { flexDirection: 'row' as const, gap: 12, paddingHorizontal: 16 },
+  businessAction: {
+    backgroundColor: '#27272A',
+    borderRadius: 8,
+    gap: 3,
+    height: 92,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: 128,
+  },
+  businessActionText: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  reviewSection: { gap: 10, marginTop: 6 },
+  reviewTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 18 },
+  reviewSummary: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+  },
+  ratingRow: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 10 },
+  ratingValue: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 24 },
+  stars: { flexDirection: 'row' as const, gap: 2 },
+  reviewButton: {
+    borderColor: '#4D4D56',
+    borderRadius: 24,
+    borderWidth: 1.6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  reviewButtonText: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 14 },
+  reviewCount: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
+  businessInfoSection: {
+    backgroundColor: '#27272A',
+    borderRadius: 12,
+    gap: 14,
+    marginTop: 6,
+    padding: 14,
+  },
   media: { backgroundColor: '#27272A', borderRadius: 16, height: 300, width: '100%' as const },
   mediaFallback: { alignItems: 'center' as const, justifyContent: 'center' as const },
   titleRow: {

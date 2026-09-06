@@ -15,7 +15,10 @@ export function useDetailViewModel(kind: 'city' | 'event' | 'business', id: stri
   });
   const business = useQuery({
     enabled: kind === 'business',
-    queryFn: () => detailApi.business(id),
+    queryFn: async () => ({
+      ...(await detailApi.business(id)),
+      media: await detailApi.businessMedia(id),
+    }),
     queryKey: ['business', id],
   });
   return kind === 'city' ? city : kind === 'event' ? event : business;
