@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import { AccountSwitcherSheet } from '@/features/accounts/components/AccountSwitcherSheet';
+import { useOwnedBusiness } from '@/features/businesses/use-owned-business';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -13,6 +14,7 @@ export function AccountScreen() {
   const logout = useSessionStore((state) => state.logout);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const isBusiness = account?.type === 'business';
+  const ownedBusiness = useOwnedBusiness();
 
   if (!account)
     return (
@@ -35,9 +37,13 @@ export function AccountScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.accountCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(account.display_name ?? account.name ?? account.email).slice(0, 1).toUpperCase()}
-            </Text>
+            {ownedBusiness.data?.avatar_url ? (
+              <Image source={{ uri: ownedBusiness.data.avatar_url }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>
+                {(account.display_name ?? account.name ?? account.email).slice(0, 1).toUpperCase()}
+              </Text>
+            )}
           </View>
           <View style={styles.accountInfo}>
             <Text numberOfLines={1} style={styles.accountName}>
@@ -198,6 +204,7 @@ const styles = {
     width: 48,
   },
   avatarText: { color: colors.primaryForeground, fontFamily: 'DMSans-Bold', fontSize: 20 },
+  avatarImage: { borderRadius: 999, height: 48, width: 48 },
   accountInfo: { flex: 1, gap: 4 },
   accountName: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 18 },
   badge: {

@@ -22,6 +22,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <Stack
           screenOptions={{
+            animation: 'default',
             contentStyle: { backgroundColor: colors.background },
             headerShown: false,
           }}

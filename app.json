@@ -65,7 +65,13 @@
       ],
       "expo-secure-store",
       "expo-sqlite",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permita o acesso às suas fotos para definir a imagem do seu negócio."
+        }
+      ]
     ],
     "extra": {
       "router": {},

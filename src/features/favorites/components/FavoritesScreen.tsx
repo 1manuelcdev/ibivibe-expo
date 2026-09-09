@@ -80,9 +80,17 @@ export function FavoritesScreen() {
                 style={styles.row}
               >
                 {image ? (
-                  <Image source={{ uri: image }} style={styles.cover} />
+                  <Image
+                    source={{ uri: image }}
+                    style={[styles.cover, tab === 'businesses' && styles.businessAvatar]}
+                  />
                 ) : (
-                  <View style={styles.coverFallback}>
+                  <View
+                    style={[
+                      styles.coverFallback,
+                      tab === 'businesses' && styles.businessAvatar,
+                    ]}
+                  >
                     <Ionicons color={colors.mutedForeground} name={favoriteIcons[tab]} size={24} />
                   </View>
                 )}
@@ -136,6 +144,7 @@ const styles = {
     padding: 8,
   },
   cover: { borderRadius: 8, height: 56, width: 56 },
+  businessAvatar: { borderRadius: 999, overflow: 'hidden' as const },
   coverFallback: {
     alignItems: 'center' as const,
     backgroundColor: colors.background,

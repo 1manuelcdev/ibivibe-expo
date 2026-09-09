@@ -6,7 +6,7 @@ export default function SearchLayout() {
   return (
     <Stack
       screenOptions={{
-        animation: 'fade',
+        animation: 'default',
         contentStyle: { backgroundColor: colors.background },
         headerShown: false,
       }}
