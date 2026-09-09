@@ -171,9 +171,17 @@ function ResultGroup({
           style={styles.resultRow}
         >
           {item.image ? (
-            <Image source={{ uri: item.image }} style={styles.resultImage} />
+            <Image
+              source={{ uri: item.image }}
+              style={[styles.resultImage, kind === 'business' && styles.businessResultImage]}
+            />
           ) : (
-            <View style={styles.resultImageFallback}>
+            <View
+              style={[
+                styles.resultImageFallback,
+                kind === 'business' && styles.businessResultImage,
+              ]}
+            >
               <Ionicons color={colors.mutedForeground} name={resultIcons[kind]} size={24} />
             </View>
           )}
@@ -266,6 +274,7 @@ const styles = {
     padding: 8,
   },
   resultImage: { borderRadius: 8, height: 56, width: 56 },
+  businessResultImage: { borderRadius: 999, overflow: 'hidden' as const },
   resultImageFallback: {
     alignItems: 'center' as const,
     backgroundColor: colors.background,

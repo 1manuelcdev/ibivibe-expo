@@ -80,6 +80,7 @@ function CityRow({ item, onPress }: { item: HomeCity; onPress: () => void }) {
     <EntityRow
       image={item.cover_img_url}
       icon="location-outline"
+      kind="city"
       onPress={onPress}
       tags={item.tags}
       title={item.name}
@@ -91,6 +92,7 @@ function BusinessRow({ item, onPress }: { item: HomeBusiness; onPress: () => voi
     <EntityRow
       image={item.avatar_url}
       icon="briefcase-outline"
+      kind="business"
       onPress={onPress}
       tags={item.tags}
       title={item.name ?? item.commercial_name ?? 'Empresa'}
@@ -102,6 +104,7 @@ function EventRow({ item, onPress }: { item: HomeEvent; onPress: () => void }) {
     <EntityRow
       image={item.cover_img_url}
       icon="calendar-outline"
+      kind="event"
       meta={formatDate(item.start_date, item.end_date)}
       onPress={onPress}
       tags={item.tags}
@@ -113,6 +116,7 @@ function EventRow({ item, onPress }: { item: HomeEvent; onPress: () => void }) {
 function EntityRow({
   image,
   icon,
+  kind,
   meta,
   onPress,
   tags,
@@ -120,6 +124,7 @@ function EntityRow({
 }: {
   image?: string | null;
   icon: keyof typeof Ionicons.glyphMap;
+  kind: 'business' | 'city' | 'event';
   meta?: string;
   onPress: () => void;
   tags?: string[];
@@ -128,7 +133,13 @@ function EntityRow({
   const [failed, setFailed] = useState(false);
   return (
     <Pressable onPress={onPress} style={styles.card}>
-      <View style={styles.thumb}>
+      <View
+        style={[
+          styles.thumb,
+          kind === 'business' && styles.businessThumb,
+          kind === 'event' && styles.eventThumb,
+        ]}
+      >
         {image && !failed ? (
           <Image
             onError={() => setFailed(true)}
@@ -244,6 +255,8 @@ const styles = {
     width: 78,
   },
   thumbImage: { height: '100%' as const, width: '100%' as const },
+  businessThumb: { borderRadius: 999, height: 70, width: 70 },
+  eventThumb: { borderRadius: 9, height: 70, width: 70 },
   cardInfo: { flex: 1, gap: 6 },
   cardTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 15 },
   meta: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },

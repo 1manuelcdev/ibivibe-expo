@@ -11,14 +11,11 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 
-import type {
-  BusinessDetail,
-  CityDetail,
-  DetailMedia,
-  EventDetail,
-} from '@/features/details/detail-api';
+import type { BusinessDetail, CityDetail, EventDetail } from '@/features/details/detail-api';
 import { useDetailViewModel } from '@/features/details/viewmodels/useDetailViewModel';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { BottomSheet } from '@/components/BottomSheet';
+import { FullScreenImageViewer } from '@/components/FullScreenImageViewer';
 import { useFavoritesViewModel } from '@/features/favorites/viewmodels/useFavoritesViewModel';
 import { ReviewSection } from '@/features/reviews/components/ReviewSection';
 import { colors } from '@/theme/tokens';
@@ -200,9 +197,13 @@ function BusinessDetailPage({
   onBack: () => void;
   onToggleFavorite: () => Promise<void>;
 }) {
+  const [activeSheet, setActiveSheet] = useState<'contact' | 'hours' | 'location' | null>(null);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const title = data.commercial_name ?? data.name ?? 'Empresa';
   const slug = title.toLocaleLowerCase('pt-BR').replaceAll(/\s+/g, '-');
-  const description = data.bio?.trim() || data.description?.trim() || 'Sem descrição disponível.';
+  // A descrição é um atributo da empresa. `bio` é da conta proprietária e só
+  // serve como compatibilidade para empresas criadas antes desse alinhamento.
+  const description = data.description?.trim() || data.bio?.trim() || 'Sem descrição disponível.';
   const contactRows = [
     data.contact?.phone && { icon: 'call-outline' as const, text: data.contact.phone },
     data.contact?.whatsapp && { icon: 'logo-whatsapp' as const, text: data.contact.whatsapp },
@@ -211,7 +212,12 @@ function BusinessDetailPage({
       text: data.contact.public_email,
     },
     data.contact?.website && { icon: 'globe-outline' as const, text: data.contact.website },
+    data.contact?.instagram && { icon: 'logo-instagram' as const, text: data.contact.instagram },
+    data.contact?.facebook && { icon: 'logo-facebook' as const, text: data.contact.facebook },
   ].filter(Boolean) as Array<{ icon: keyof typeof Ionicons.glyphMap; text: string }>;
+  const galleryImages =
+    data.media?.filter((item) => item.media_type !== 'video').map((item) => item.url) ?? [];
+  if (!galleryImages.length && data.avatar_url) galleryImages.push(data.avatar_url);
 
   return (
     <View style={styles.screen}>
@@ -259,13 +265,25 @@ function BusinessDetailPage({
         </View>
 
         <Text style={styles.businessDescription}>{description}</Text>
-        <BusinessMediaCarousel avatarUrl={data.avatar_url} media={data.media ?? []} />
+        <BusinessMediaCarousel images={galleryImages} onOpenImage={setViewerIndex} />
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionScroller}>
           <View style={styles.businessActions}>
-            <BusinessAction icon="albums-outline" label="Contatos e Redes sociais" />
-            <BusinessAction icon="time-outline" label="Horário de funcionamento" />
-            <BusinessAction icon="location-outline" label="Localização" />
+            <BusinessAction
+              icon="albums-outline"
+              label="Contatos e Redes sociais"
+              onPress={() => setActiveSheet('contact')}
+            />
+            <BusinessAction
+              icon="time-outline"
+              label="Horário de funcionamento"
+              onPress={() => setActiveSheet('hours')}
+            />
+            <BusinessAction
+              icon="location-outline"
+              label="Localização"
+              onPress={() => setActiveSheet('location')}
+            />
           </View>
         </ScrollView>
 
@@ -295,32 +313,128 @@ function BusinessDetailPage({
           </View>
         ) : null}
       </ScrollView>
+      <BusinessInfoSheet
+        onClose={() => setActiveSheet(null)}
+        title="Contatos e redes sociais"
+        visible={activeSheet === 'contact'}
+      >
+        {contactRows.length ? (
+          contactRows.map((item) => <Info icon={item.icon} key={item.text} text={item.text} />)
+        ) : (
+          <SheetEmpty text="Esta empresa ainda não informou contatos públicos." />
+        )}
+      </BusinessInfoSheet>
+      <BusinessInfoSheet
+        onClose={() => setActiveSheet(null)}
+        title="Horário de funcionamento"
+        visible={activeSheet === 'hours'}
+      >
+        {data.hours?.length ? (
+          data.hours.map((hour) => (
+            <View key={hour.weekday} style={styles.hoursRow}>
+              <Text style={styles.hoursDay}>{weekdayName(hour.weekday)}</Text>
+              <Text style={styles.hoursValue}>
+                {hour.is_closed ? 'Fechado' : `${hour.opens_at ?? '—'} às ${hour.closes_at ?? '—'}`}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <SheetEmpty text="Esta empresa ainda não informou seus horários." />
+        )}
+      </BusinessInfoSheet>
+      <BusinessInfoSheet
+        onClose={() => setActiveSheet(null)}
+        title="Localização"
+        visible={activeSheet === 'location'}
+      >
+        {data.locations?.length ? (
+          data.locations.map((location, index) => (
+            <View key={`${location.city?.name}-${index}`} style={styles.locationRow}>
+              <Ionicons color={colors.mutedForeground} name="location-outline" size={21} />
+              <View style={styles.locationText}>
+                <Text style={styles.locationName}>
+                  {location.city?.name ?? 'Localização'}
+                  {location.is_headquarter ? ' (matriz)' : ''}
+                </Text>
+                {location.address ? (
+                  <Text style={styles.locationAddress}>{location.address}</Text>
+                ) : null}
+              </View>
+            </View>
+          ))
+        ) : (
+          <SheetEmpty text="Esta empresa ainda não informou uma localização." />
+        )}
+      </BusinessInfoSheet>
+      <FullScreenImageViewer
+        images={galleryImages}
+        initialIndex={viewerIndex ?? 0}
+        onClose={() => setViewerIndex(null)}
+        visible={viewerIndex !== null}
+      />
     </View>
   );
 }
 
-function BusinessAction({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
+function BusinessAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
   return (
-    <View style={styles.businessAction}>
+    <Pressable onPress={onPress} style={styles.businessAction}>
       <Ionicons color={colors.mutedForeground} name={icon} size={24} />
       <Text style={styles.businessActionText}>{label}</Text>
-    </View>
+    </Pressable>
   );
+}
+
+function BusinessInfoSheet({
+  children,
+  onClose,
+  title,
+  visible,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+  title: string;
+  visible: boolean;
+}) {
+  return (
+    <BottomSheet onClose={onClose} visible={visible}>
+      <View style={styles.sheetHeader}>
+        <Text style={styles.sheetTitle}>{title}</Text>
+        <Pressable accessibilityLabel="Fechar" onPress={onClose}>
+          <Ionicons color={colors.foreground} name="close" size={24} />
+        </Pressable>
+      </View>
+      <ScrollView contentContainerStyle={styles.sheetContent} showsVerticalScrollIndicator={false}>
+        {children}
+      </ScrollView>
+    </BottomSheet>
+  );
+}
+
+function SheetEmpty({ text }: { text: string }) {
+  return <Text style={styles.sheetEmpty}>{text}</Text>;
 }
 
 function BusinessMediaCarousel({
-  avatarUrl,
-  media,
+  images,
+  onOpenImage,
 }: {
-  avatarUrl?: string | null;
-  media: DetailMedia[];
+  images: string[];
+  onOpenImage: (index: number) => void;
 }) {
   const { width } = useWindowDimensions();
   const mediaWidth = width - 32;
-  const images = media.filter((item) => item.media_type !== 'video').map((item) => item.url);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  if (!images.length && !avatarUrl) {
+  if (!images.length) {
     return (
       <View style={[styles.businessMedia, styles.businessMediaFallback]}>
         <Ionicons color={colors.mutedForeground} name="image-outline" size={44} />
@@ -328,7 +442,6 @@ function BusinessMediaCarousel({
     );
   }
 
-  const slides = images.length ? images : [avatarUrl!];
   return (
     <View style={styles.businessCarousel}>
       <ScrollView
@@ -339,17 +452,15 @@ function BusinessMediaCarousel({
         pagingEnabled
         showsHorizontalScrollIndicator={false}
       >
-        {slides.map((uri, index) => (
-          <Image
-            key={`${uri}-${index}`}
-            source={{ uri }}
-            style={[styles.businessMedia, { width: mediaWidth }]}
-          />
+        {images.map((uri, index) => (
+          <Pressable key={`${uri}-${index}`} onPress={() => onOpenImage(index)}>
+            <Image source={{ uri }} style={[styles.businessMedia, { width: mediaWidth }]} />
+          </Pressable>
         ))}
       </ScrollView>
-      {slides.length > 1 ? (
+      {images.length > 1 ? (
         <View style={styles.carouselDots}>
-          {slides.map((uri, index) => (
+          {images.map((uri, index) => (
             <View
               key={`${uri}-dot`}
               style={index === activeIndex ? styles.carouselDotActive : styles.carouselDot}
@@ -405,6 +516,19 @@ function formatDate(start?: string, end?: string) {
       new Date(value),
     );
   return end ? `${format(start)} – ${format(end)}` : format(start);
+}
+function weekdayName(weekday: number) {
+  return (
+    [
+      'Domingo',
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sábado',
+    ][weekday] ?? 'Dia não informado'
+  );
 }
 
 const styles = {
@@ -496,6 +620,38 @@ const styles = {
     fontFamily: 'DMSans-Medium',
     fontSize: 14,
     lineHeight: 19,
+  },
+  sheetHeader: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+  },
+  sheetTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 18 },
+  sheetContent: { gap: 16, paddingBottom: 16, paddingTop: 20 },
+  sheetEmpty: {
+    color: colors.mutedForeground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  hoursRow: {
+    alignItems: 'center' as const,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    paddingBottom: 12,
+  },
+  hoursDay: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  hoursValue: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  locationRow: { alignItems: 'flex-start' as const, flexDirection: 'row' as const, gap: 10 },
+  locationText: { flex: 1, gap: 3 },
+  locationName: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  locationAddress: {
+    color: colors.mutedForeground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    lineHeight: 20,
   },
   reviewSection: { gap: 10, marginTop: 6 },
   reviewTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 18 },

@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Image,
-  Modal,
   Pressable,
   ScrollView,
   type StyleProp,
@@ -21,7 +22,12 @@ import {
   type BusinessContactUpdate,
   type BusinessProfileUpdate,
 } from '@/features/businesses/business-editor-api';
-import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
+import { invalidateBusinessCaches } from '@/features/businesses/business-cache';
+import {
+  cleanupPreparedImage,
+  prepareImageForUpload,
+} from '@/features/businesses/image-upload-service';
+import { BottomSheet } from '@/components/BottomSheet';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -53,7 +59,11 @@ export function MyBusinessScreen() {
     );
 
   return (
-    <BusinessEditor key={query.data.business.id} data={query.data} onBack={() => router.back()} />
+    <BusinessEditor
+      key={`${query.data.business.id}-${query.data.profile.tags?.join(',') ?? ''}`}
+      data={query.data}
+      onBack={() => router.back()}
+    />
   );
 }
 
@@ -68,9 +78,10 @@ function BusinessEditor({
   const queryClient = useQueryClient();
   const businessId = data.business.id;
   const [profile, setProfile] = useState<BusinessProfileUpdate>({
-    bio: data.profile.bio ?? '',
     commercial_name: data.profile.commercial_name ?? data.profile.name ?? '',
-    description: data.profile.description ?? '',
+    // `bio` pertence à conta. Mantemos a leitura como fallback apenas para
+    // negócios legados; ao salvar, a descrição passa a viver na empresa.
+    description: data.profile.description ?? data.profile.bio ?? '',
     ...facilities.reduce(
       (values, [key]) => ({
         ...values,
@@ -87,16 +98,23 @@ function BusinessEditor({
     website: data.profile.contact?.website ?? '',
     whatsapp: data.profile.contact?.whatsapp ?? '',
   });
-  const [selectedTags, setSelectedTags] = useState(() =>
-    data.tags.filter((tag) => data.profile.tags?.includes(tag.name)).slice(0, 4),
+  const selectedTags = data.tags.filter((tag) => data.profile.tags?.includes(tag.name)).slice(0, 4);
+  const visibleProfileTags = selectedTags.slice(0, 1);
+  const hiddenProfileTags = selectedTags.length - visibleProfileTags.length;
+  const [editor, setEditor] = useState<'profile' | 'description' | 'contact' | 'facilities' | null>(
+    null,
   );
-  const [pickerVisible, setPickerVisible] = useState(false);
   const [descriptionStatus, setDescriptionStatus] = useState<SaveStatus>('idle');
   const [contactStatus, setContactStatus] = useState<SaveStatus>('idle');
-  const [tagsStatus, setTagsStatus] = useState<SaveStatus>('idle');
   const [facilitiesStatus, setFacilitiesStatus] = useState<SaveStatus>('idle');
+  const [profileUploadProgress, setProfileUploadProgress] = useState(0);
+  const [profileUploadStage, setProfileUploadStage] = useState<'idle' | 'processing' | 'uploading'>(
+    'idle',
+  );
+  const profileUploadAbortController = useRef<AbortController | null>(null);
+  const profileUploadCancelled = useRef(false);
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['business-editor'] });
+  const refresh = () => invalidateBusinessCaches(queryClient, businessId);
   const profileMutation = useMutation({
     mutationFn: (payload: BusinessProfileUpdate) =>
       businessEditorApi.updateProfile(businessId, payload),
@@ -107,14 +125,64 @@ function BusinessEditor({
       businessEditorApi.updateContact(businessId, payload),
     onSuccess: refresh,
   });
-  const tagsMutation = useMutation({
-    mutationFn: (tags: OnboardingTag[]) =>
-      businessEditorApi.updateTags(
-        businessId,
-        tags.map((tag) => tag.id),
-      ),
+  const profilePhotoMutation = useMutation({
+    mutationFn: async (photo: ImagePicker.ImagePickerAsset) => {
+      const prepared = await prepareImageForUpload(photo, 'avatar');
+      setProfileUploadStage('uploading');
+      const controller = new AbortController();
+      profileUploadAbortController.current = controller;
+      try {
+        return await businessEditorApi.uploadProfilePhoto(businessId, prepared, {
+          onProgress: setProfileUploadProgress,
+          signal: controller.signal,
+        });
+      } finally {
+        if (profileUploadAbortController.current === controller) {
+          profileUploadAbortController.current = null;
+        }
+        cleanupPreparedImage(prepared);
+      }
+    },
     onSuccess: refresh,
+    onSettled: () => setProfileUploadStage('idle'),
   });
+
+  async function pickProfilePhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        'Permissão necessária',
+        'Permita o acesso às fotos para escolher uma imagem de perfil.',
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      mediaTypes: ['images'],
+      quality: 1,
+    });
+    if (result.canceled) return;
+
+    setProfileUploadProgress(0);
+    profileUploadCancelled.current = false;
+    setProfileUploadStage('processing');
+    profilePhotoMutation.mutate(result.assets[0], {
+      onError: (error) => {
+        if (profileUploadCancelled.current) return;
+        Alert.alert(
+          'Não foi possível enviar a foto',
+          error instanceof Error ? error.message : 'Tente novamente.',
+        );
+      },
+    });
+  }
+
+  function cancelProfilePhotoUpload() {
+    profileUploadCancelled.current = true;
+    profileUploadAbortController.current?.abort();
+  }
 
   function saveDescription() {
     profileMutation.mutate(profile, {
@@ -125,12 +193,6 @@ function BusinessEditor({
   function saveContact() {
     contactMutation.mutate(contact, {
       onSuccess: () => setContactStatus('saved'),
-      onError: () => Alert.alert('Não foi possível salvar', 'Tente novamente.'),
-    });
-  }
-  function saveTags() {
-    tagsMutation.mutate(selectedTags, {
-      onSuccess: () => setTagsStatus('saved'),
       onError: () => Alert.alert('Não foi possível salvar', 'Tente novamente.'),
     });
   }
@@ -151,9 +213,80 @@ function BusinessEditor({
           <Pressable accessibilityLabel="Voltar" onPress={onBack}>
             <Ionicons color={colors.foreground} name="arrow-back" size={25} />
           </Pressable>
-          <Text style={styles.title}>Meu Negócio</Text>
+          <Text style={styles.title}>Meu negócio</Text>
         </View>
-        <Section title="Imagens" trailing="Visualizar">
+        <View style={styles.profileSection}>
+          <View style={styles.profileRow}>
+            <View>
+              {data.profile.avatar_url ? (
+                <Image source={{ uri: data.profile.avatar_url }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.imageEmpty]}>
+                  <Ionicons color={colors.mutedForeground} name="storefront-outline" size={28} />
+                </View>
+              )}
+              {profileUploadStage !== 'idle' ? (
+                <View style={styles.photoUploadOverlay}>
+                  <ActivityIndicator color={colors.primary} size="small" />
+                  <Text style={styles.photoUploadProgress}>
+                    {profileUploadStage === 'processing'
+                      ? 'Otimizando…'
+                      : `${profileUploadProgress}%`}
+                  </Text>
+                  {profileUploadStage === 'uploading' ? (
+                    <Pressable onPress={cancelProfilePhotoUpload} style={styles.cancelPhotoUpload}>
+                      <Text style={styles.cancelPhotoUploadText}>Cancelar</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : null}
+              <Pressable
+                accessibilityLabel="Editar foto de perfil"
+                disabled={profileUploadStage !== 'idle'}
+                onPress={pickProfilePhoto}
+                style={[styles.photoEdit, profileUploadStage !== 'idle' && styles.disabled]}
+              >
+                <Ionicons color={colors.primaryForeground} name="pencil" size={14} />
+              </Pressable>
+            </View>
+            <View style={styles.profileInfo}>
+              <Text numberOfLines={1} style={styles.businessName}>
+                {profile.commercial_name || data.profile.name}
+              </Text>
+              <View style={styles.profileTags}>
+                {visibleProfileTags.map((tag) => (
+                  <View key={tag.id} style={styles.profileTag}>
+                    <Text numberOfLines={1} style={styles.profileTagText}>
+                      {tag.name}
+                    </Text>
+                  </View>
+                ))}
+                {hiddenProfileTags > 0 ? (
+                  <View style={styles.profileTagCount}>
+                    <Text style={styles.profileTagCountText}>(+{hiddenProfileTags})</Text>
+                  </View>
+                ) : null}
+                <Pressable
+                  onPress={() => router.push('/(app)/businesses/tags')}
+                  style={styles.editPill}
+                >
+                  <Ionicons color={colors.background} name="pencil" size={14} />
+                  <Text style={styles.editPillText}>Editar tags</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <Text style={styles.description}>
+            {profile.description || 'Conte a história do seu negócio.'}
+          </Text>
+          <Pressable onPress={() => setEditor('description')} style={styles.editPill}>
+            <Ionicons color={colors.background} name="pencil" size={14} />
+            <Text style={styles.editPillText}>Editar descrição</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.gallerySection}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -169,103 +302,41 @@ function BusinessEditor({
               </View>
             )}
           </ScrollView>
-        </Section>
-        <Section title="Tags" subtitle="Adicione até 4 (plano básico)">
-          <View style={styles.chips}>
-            {selectedTags.map((tag) => (
-              <Chip
-                key={tag.id}
-                label={tag.name}
-                onPress={() => {
-                  setSelectedTags(selectedTags.filter((item) => item.id !== tag.id));
-                  setTagsStatus('dirty');
-                }}
-              />
-            ))}
-            {selectedTags.length < 4 && <AddChip onPress={() => setPickerVisible(true)} />}
-          </View>
-          <FadeSaveButton
-            status={tagsStatus}
-            loading={tagsMutation.isPending}
-            onPress={saveTags}
-            onSavedMessageExpired={() => setTagsStatus('idle')}
+          <Pressable
+            onPress={() => router.push('/(app)/businesses/gallery')}
+            style={styles.galleryEdit}
+          >
+            <Ionicons color={colors.background} name="pencil" size={14} />
+            <Text style={styles.editPillText}>Editar galeria de fotos</Text>
+          </Pressable>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.actionCards}
+        >
+          <ActionCard
+            icon="people-outline"
+            label="Contatos e Redes sociais"
+            onPress={() => setEditor('contact')}
           />
-        </Section>
-        <Section title="Descrição">
-          <TextField
-            value={profile.commercial_name ?? ''}
-            onChangeText={(commercial_name) => {
-              setProfile({ ...profile, commercial_name });
-              setDescriptionStatus('dirty');
-            }}
-            placeholder="Nome comercial"
+          <ActionCard
+            icon="time-outline"
+            label="Horário de funcionamento"
+            onPress={() =>
+              Alert.alert('Horários', 'A edição de horários depende de suporte da API.')
+            }
           />
-          <TextField
-            value={profile.bio ?? ''}
-            onChangeText={(bio) => {
-              setProfile({ ...profile, bio });
-              setDescriptionStatus('dirty');
-            }}
-            placeholder="Resumo do negócio"
+          <ActionCard
+            icon="location-outline"
+            label="Localização"
+            onPress={() =>
+              Alert.alert('Localização', 'A edição de localização depende de suporte da API.')
+            }
           />
-          <TextField
-            value={profile.description ?? ''}
-            onChangeText={(description) => {
-              setProfile({ ...profile, description });
-              setDescriptionStatus('dirty');
-            }}
-            placeholder="Conte a história do seu negócio"
-          />
-          <FadeSaveButton
-            status={descriptionStatus}
-            loading={profileMutation.isPending}
-            onPress={saveDescription}
-            onSavedMessageExpired={() => setDescriptionStatus('idle')}
-          />
-        </Section>
-        <Section title="Contatos / Redes Sociais" subtitle="Adicione até 2 (plano básico)">
-          <TextField
-            value={contact.instagram ?? ''}
-            onChangeText={(instagram) => {
-              setContact({ ...contact, instagram });
-              setContactStatus('dirty');
-            }}
-            placeholder="instagram.com/"
-          />
-          <TextField
-            value={contact.whatsapp ?? ''}
-            onChangeText={(whatsapp) => {
-              setContact({ ...contact, whatsapp });
-              setContactStatus('dirty');
-            }}
-            placeholder="WhatsApp"
-            keyboardType="phone-pad"
-          />
-          <TextField
-            value={contact.public_email ?? ''}
-            onChangeText={(public_email) => {
-              setContact({ ...contact, public_email });
-              setContactStatus('dirty');
-            }}
-            placeholder="E-mail público"
-            keyboardType="email-address"
-          />
-          <TextField
-            value={contact.website ?? ''}
-            onChangeText={(website) => {
-              setContact({ ...contact, website });
-              setContactStatus('dirty');
-            }}
-            placeholder="Site"
-            autoCapitalize="none"
-          />
-          <FadeSaveButton
-            status={contactStatus}
-            loading={contactMutation.isPending}
-            onPress={saveContact}
-            onSavedMessageExpired={() => setContactStatus('idle')}
-          />
-        </Section>
+        </ScrollView>
+
         <Section title="Facilidades">
           <View style={styles.chips}>
             {facilities.map(([key, label]) =>
@@ -281,15 +352,7 @@ function BusinessEditor({
               ) : null,
             )}
             {facilities.some(([key]) => !profile[key]) && (
-              <AddChip
-                onPress={() => {
-                  const next = facilities.find(([key]) => !profile[key]);
-                  if (next) {
-                    setProfile({ ...profile, [next[0]]: true });
-                    setFacilitiesStatus('dirty');
-                  }
-                }}
-              />
+              <AddChip onPress={() => setEditor('facilities')} />
             )}
           </View>
           <FadeSaveButton
@@ -307,18 +370,162 @@ function BusinessEditor({
           <Text style={styles.previewButtonText}>Visualizar página pública</Text>
         </Pressable>
       </ScrollView>
-      <TagPicker
-        selected={selectedTags}
-        tags={data.tags}
-        visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        onSave={(next) => {
-          setSelectedTags(next);
-          setTagsStatus('dirty');
-          setPickerVisible(false);
-        }}
-      />
+      <EditorModal
+        title={
+          editor === 'contact'
+            ? 'Contatos e redes sociais'
+            : editor === 'facilities'
+              ? 'Facilidades'
+              : editor === 'description'
+                ? 'Editar descrição'
+                : 'Editar perfil'
+        }
+        visible={editor !== null}
+        onClose={() => setEditor(null)}
+      >
+        {editor === 'profile' && (
+          <TextField
+            value={profile.commercial_name ?? ''}
+            onChangeText={(commercial_name) => {
+              setProfile({ ...profile, commercial_name });
+              setDescriptionStatus('dirty');
+            }}
+            placeholder="Nome comercial"
+          />
+        )}
+        {editor === 'description' && (
+          <TextField
+            value={profile.description ?? ''}
+            onChangeText={(description) => {
+              setProfile({ ...profile, description });
+              setDescriptionStatus('dirty');
+            }}
+            placeholder="Conte a história do seu negócio"
+          />
+        )}
+        {editor === 'contact' && (
+          <>
+            <TextField
+              value={contact.instagram ?? ''}
+              onChangeText={(instagram) => {
+                setContact({ ...contact, instagram });
+                setContactStatus('dirty');
+              }}
+              placeholder="instagram.com/"
+            />
+            <TextField
+              value={contact.whatsapp ?? ''}
+              onChangeText={(whatsapp) => {
+                setContact({ ...contact, whatsapp });
+                setContactStatus('dirty');
+              }}
+              placeholder="WhatsApp"
+              keyboardType="phone-pad"
+            />
+            <TextField
+              value={contact.public_email ?? ''}
+              onChangeText={(public_email) => {
+                setContact({ ...contact, public_email });
+                setContactStatus('dirty');
+              }}
+              placeholder="E-mail público"
+              keyboardType="email-address"
+            />
+            <TextField
+              value={contact.website ?? ''}
+              onChangeText={(website) => {
+                setContact({ ...contact, website });
+                setContactStatus('dirty');
+              }}
+              placeholder="Site"
+              autoCapitalize="none"
+            />
+          </>
+        )}
+        {editor === 'facilities' && (
+          <View style={styles.chips}>
+            {facilities.map(([key, label]) => (
+              <Pressable
+                key={key}
+                onPress={() => {
+                  setProfile({ ...profile, [key]: !profile[key] });
+                  setFacilitiesStatus('dirty');
+                }}
+                style={[styles.chip, profile[key] && styles.selectedChip]}
+              >
+                <Text style={styles.chipText}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+        {editor === 'contact' ? (
+          <FadeSaveButton
+            loading={contactMutation.isPending}
+            onPress={saveContact}
+            onSavedMessageExpired={() => setContactStatus('idle')}
+            status={contactStatus}
+          />
+        ) : editor === 'facilities' ? (
+          <FadeSaveButton
+            loading={profileMutation.isPending}
+            onPress={saveFacilities}
+            onSavedMessageExpired={() => setFacilitiesStatus('idle')}
+            status={facilitiesStatus}
+          />
+        ) : (
+          <FadeSaveButton
+            loading={profileMutation.isPending}
+            onPress={saveDescription}
+            onSavedMessageExpired={() => setDescriptionStatus('idle')}
+            status={descriptionStatus}
+          />
+        )}
+      </EditorModal>
     </View>
+  );
+}
+
+function ActionCard({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={styles.actionCard}>
+      <Ionicons color={colors.mutedForeground} name={icon} size={24} />
+      <View style={styles.actionEdit}>
+        <Ionicons color={colors.background} name="pencil" size={14} />
+      </View>
+      <Text style={styles.actionCardText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function EditorModal({
+  children,
+  onClose,
+  title,
+  visible,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+  title: string;
+  visible: boolean;
+}) {
+  return (
+    <BottomSheet onClose={onClose} visible={visible}>
+      <View style={styles.modalHeader}>
+        <Text style={styles.title}>{title}</Text>
+        <Pressable accessibilityLabel="Fechar" onPress={onClose}>
+          <Ionicons color={colors.foreground} name="close" size={24} />
+        </Pressable>
+      </View>
+      <ScrollView contentContainerStyle={styles.editorContent}>{children}</ScrollView>
+    </BottomSheet>
   );
 }
 
@@ -425,61 +632,6 @@ function FadeSaveButton({
     </Animated.View>
   );
 }
-function TagPicker({
-  onClose,
-  onSave,
-  selected,
-  tags,
-  visible,
-}: {
-  onClose: () => void;
-  onSave: (tags: OnboardingTag[]) => void;
-  selected: OnboardingTag[];
-  tags: OnboardingTag[];
-  visible: boolean;
-}) {
-  const [draft, setDraft] = useState(selected);
-  return (
-    <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modal}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Adicionar tags</Text>
-            <Pressable onPress={onClose}>
-              <Ionicons color={colors.foreground} name="close" size={24} />
-            </Pressable>
-          </View>
-          <ScrollView>
-            {tags.map((tag) => {
-              const selectedTag = draft.some((item) => item.id === tag.id);
-              return (
-                <Pressable
-                  key={tag.id}
-                  onPress={() =>
-                    setDraft(
-                      selectedTag
-                        ? draft.filter((item) => item.id !== tag.id)
-                        : draft.length < 4
-                          ? [...draft, tag]
-                          : draft,
-                    )
-                  }
-                  style={styles.tagRow}
-                >
-                  <Text style={styles.chipText}>{tag.name}</Text>
-                  {selectedTag && <Ionicons color={colors.primary} name="checkmark" size={20} />}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-          <Pressable onPress={() => onSave(draft)} style={styles.save}>
-            <Text style={styles.saveText}>Salvar tags</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-}
 function ScreenState({
   icon,
   onRetry,
@@ -510,29 +662,35 @@ function MyBusinessSkeleton() {
           <Skeleton style={styles.skeletonBack} />
           <Skeleton style={styles.skeletonTitle} />
         </View>
-        <Skeleton style={styles.skeletonImage} />
-
+        <View style={styles.skeletonProfileSection}>
+          <View style={styles.profileRow}>
+            <Skeleton style={styles.skeletonAvatar} />
+            <View style={styles.skeletonProfileInfo}>
+              <Skeleton style={styles.skeletonBusinessName} />
+              <View style={styles.skeletonChips}>
+                <Skeleton style={styles.skeletonTag} />
+                <Skeleton style={styles.skeletonTagWide} />
+                <Skeleton style={styles.skeletonEditPill} />
+              </View>
+            </View>
+          </View>
+          <Skeleton style={styles.skeletonDivider} />
+          <Skeleton style={styles.skeletonDescription} />
+          <Skeleton style={styles.skeletonEditPill} />
+        </View>
+        <Skeleton style={styles.skeletonGallery} />
+        <View style={styles.skeletonActionCards}>
+          <Skeleton style={styles.skeletonActionCard} />
+          <Skeleton style={styles.skeletonActionCard} />
+          <Skeleton style={styles.skeletonActionCard} />
+        </View>
         <View style={styles.section}>
           <Skeleton style={styles.skeletonHeading} />
           <View style={styles.skeletonChips}>
-            <Skeleton style={styles.skeletonChip} />
-            <Skeleton style={styles.skeletonChipWide} />
-            <Skeleton style={styles.skeletonChip} />
+            <Skeleton style={styles.skeletonTag} />
+            <Skeleton style={styles.skeletonTagWide} />
+            <Skeleton style={styles.skeletonTag} />
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <Skeleton style={styles.skeletonHeading} />
-          <Skeleton style={styles.skeletonInput} />
-          <Skeleton style={styles.skeletonInput} />
-          <Skeleton style={styles.skeletonInput} />
-        </View>
-
-        <View style={styles.section}>
-          <Skeleton style={styles.skeletonHeading} />
-          <Skeleton style={styles.skeletonInput} />
-          <Skeleton style={styles.skeletonInput} />
-          <Skeleton style={styles.skeletonInput} />
         </View>
         <Skeleton style={styles.skeletonButton} />
       </ScrollView>
@@ -546,9 +704,83 @@ function Skeleton({ style }: { style: StyleProp<ViewStyle> }) {
 
 const styles = {
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 24, padding: 24, paddingBottom: 40, paddingTop: 52 },
+  content: { gap: 32, paddingBottom: 112, paddingHorizontal: 16, paddingTop: 52 },
   header: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12 },
   title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 18 },
+  profileSection: { gap: 10 },
+  profileRow: { alignItems: 'flex-start' as const, flexDirection: 'row' as const, gap: 10 },
+  avatar: {
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 64,
+    overflow: 'hidden' as const,
+    width: 64,
+  },
+  profileInfo: { flex: 1, gap: 6 },
+  businessName: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
+  profileTags: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 4 },
+  profileTag: {
+    backgroundColor: '#27272A',
+    borderColor: colors.border,
+    borderRadius: 32,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  profileTagText: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 12,
+    maxWidth: 88,
+  },
+  profileTagCount: { paddingHorizontal: 2, paddingVertical: 6 },
+  profileTagCountText: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 12 },
+  photoEdit: {
+    alignItems: 'center' as const,
+    backgroundColor: colors.foreground,
+    borderRadius: 16,
+    height: 24,
+    justifyContent: 'center' as const,
+    left: 43,
+    position: 'absolute' as const,
+    top: -3,
+    width: 24,
+  },
+  photoUploadOverlay: {
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(10,10,10,0.68)',
+    borderRadius: 999,
+    height: 64,
+    justifyContent: 'center' as const,
+    left: 0,
+    overflow: 'hidden' as const,
+    position: 'absolute' as const,
+    top: 0,
+    width: 64,
+  },
+  photoUploadProgress: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 10 },
+  cancelPhotoUpload: { paddingHorizontal: 4, paddingVertical: 2 },
+  cancelPhotoUploadText: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 10 },
+  divider: { backgroundColor: '#27272A', borderRadius: 2, height: 2, marginTop: 10, width: '100%' },
+  description: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  editPill: {
+    alignItems: 'center' as const,
+    alignSelf: 'flex-start' as const,
+    backgroundColor: colors.foreground,
+    borderRadius: 32,
+    flexDirection: 'row' as const,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  editPillText: { color: colors.background, fontFamily: 'DMSans-Medium', fontSize: 12 },
+  gallerySection: { height: 256, position: 'relative' as const },
   section: { gap: 12 },
   sectionHeading: {
     alignItems: 'flex-start' as const,
@@ -558,8 +790,8 @@ const styles = {
   sectionTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
   subtitle: { color: colors.foreground, fontFamily: 'DMSans-Regular', fontSize: 14, marginTop: 4 },
   edit: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
-  imageFrame: { borderRadius: 16, height: 213 },
-  image: { borderRadius: 16, height: 213, width: 345 },
+  imageFrame: { borderRadius: 12, height: 256 },
+  image: { borderRadius: 12, height: 256, width: 361 },
   imageEmpty: {
     alignItems: 'center' as const,
     backgroundColor: '#27272A',
@@ -567,15 +799,65 @@ const styles = {
     justifyContent: 'center' as const,
   },
   muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  galleryEdit: {
+    alignItems: 'center' as const,
+    backgroundColor: colors.foreground,
+    borderRadius: 32,
+    flexDirection: 'row' as const,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    position: 'absolute' as const,
+    right: 16,
+    top: 12,
+  },
+  actionCards: { gap: 12, paddingRight: 16 },
+  actionCard: {
+    backgroundColor: '#27272A',
+    borderRadius: 8,
+    height: 92,
+    justifyContent: 'center' as const,
+    overflow: 'hidden' as const,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    position: 'relative' as const,
+    width: 128,
+  },
+  actionCardText: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 14,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  actionEdit: {
+    alignItems: 'center' as const,
+    backgroundColor: colors.foreground,
+    borderRadius: 20,
+    height: 24,
+    justifyContent: 'center' as const,
+    position: 'absolute' as const,
+    right: 8,
+    top: 7,
+    width: 32,
+  },
   skeleton: { backgroundColor: '#27272A', borderRadius: 8 },
   skeletonBack: { borderRadius: 16, height: 26, width: 26 },
   skeletonTitle: { height: 20, width: 132 },
-  skeletonImage: { borderRadius: 16, height: 213, width: '100%' },
+  skeletonProfileSection: { gap: 10 },
+  skeletonAvatar: { borderRadius: 32, height: 64, width: 64 },
+  skeletonProfileInfo: { flex: 1, gap: 10 },
+  skeletonBusinessName: { height: 18, width: 136 },
+  skeletonDivider: { height: 2, marginTop: 10, width: '100%' },
+  skeletonDescription: { height: 56, width: '100%' },
+  skeletonEditPill: { borderRadius: 20, height: 32, width: 118 },
+  skeletonGallery: { borderRadius: 12, height: 256, width: '100%' },
+  skeletonActionCards: { flexDirection: 'row' as const, gap: 12 },
+  skeletonActionCard: { borderRadius: 8, height: 92, width: 128 },
   skeletonHeading: { height: 18, marginTop: 4, width: 112 },
   skeletonChips: { flexDirection: 'row' as const, gap: 8 },
-  skeletonChip: { borderRadius: 24, height: 36, width: 86 },
-  skeletonChipWide: { borderRadius: 24, height: 36, width: 126 },
-  skeletonInput: { height: 40, width: '100%' },
+  skeletonTag: { borderRadius: 24, height: 28, width: 78 },
+  skeletonTagWide: { borderRadius: 24, height: 28, width: 112 },
   skeletonButton: { borderRadius: 24, height: 48, marginTop: 8, width: '100%' },
   chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8 },
   chip: {
@@ -612,19 +894,20 @@ const styles = {
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  modalBackdrop: {
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    flex: 1,
-    justifyContent: 'flex-end' as const,
+  selectedChip: { backgroundColor: 'rgba(159,255,139,0.1)', borderColor: colors.primary },
+  modalHeader: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
   },
-  modal: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    gap: 16,
-    maxHeight: '75%' as const,
-    padding: 24,
+  editorContent: { gap: 12, paddingBottom: 12, paddingTop: 8 },
+  tagHint: {
+    color: colors.mutedForeground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    marginTop: 8,
   },
+  tagList: { paddingBottom: 16, paddingTop: 8 },
   tagRow: {
     alignItems: 'center' as const,
     borderBottomColor: colors.border,

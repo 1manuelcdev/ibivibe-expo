@@ -416,7 +416,11 @@ function BusinessCard({
 }) {
   return (
     <Pressable onPress={onPress} style={styles.horizontalCard}>
-      <RemoteImage icon={fallbackImages.business} source={image} style={styles.thumb} />
+      <RemoteImage
+        icon={fallbackImages.business}
+        source={image}
+        style={styles.businessAvatar}
+      />
       <View style={styles.cardBody}>
         <Text numberOfLines={1} style={styles.cardTitle}>
           {title}
@@ -636,6 +640,13 @@ const styles = {
     width: 260,
   },
   thumb: { backgroundColor: '#27272A', borderRadius: 8, height: 80, width: 80 },
+  businessAvatar: {
+    backgroundColor: '#27272A',
+    borderRadius: 999,
+    height: 80,
+    overflow: 'hidden' as const,
+    width: 80,
+  },
   cardBody: { flex: 1, gap: 8, justifyContent: 'center' as const },
   cardTitle: {
     color: colors.foreground,
