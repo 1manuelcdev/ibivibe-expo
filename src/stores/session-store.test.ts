@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   markCompleted: vi.fn(),
   markPending: vi.fn(),
   register: vi.fn(),
+  refresh: vi.fn(),
   remove: vi.fn(),
   saveSession: vi.fn(),
   set: vi.fn(),
@@ -50,6 +51,7 @@ vi.mock('@/features/auth/auth-api', () => ({
     getMe: mocks.getMe,
     login: mocks.login,
     register: mocks.register,
+    refresh: mocks.refresh,
   },
 }));
 
@@ -81,7 +83,11 @@ describe('session store', () => {
 
   it('requires verification for an unverified account restored from the API', async () => {
     mocks.get.mockResolvedValue({ accessToken: 'access', refreshToken: 'refresh' });
-    mocks.getMe.mockResolvedValue({ ...verifiedAccount, is_verified: false });
+    mocks.refresh.mockResolvedValue({
+      access_token: 'new-access',
+      account: { ...verifiedAccount, is_verified: false },
+      refresh_token: 'new-refresh',
+    });
 
     await useSessionStore.getState().restoreSession();
 
@@ -132,7 +138,7 @@ describe('session store', () => {
 
   it('clears secure credentials when restoring an invalid session', async () => {
     mocks.get.mockResolvedValue({ accessToken: 'access', refreshToken: 'refresh' });
-    mocks.getMe.mockRejectedValue(new Error('Unauthorized'));
+    mocks.refresh.mockRejectedValue(new Error('Unauthorized'));
 
     await useSessionStore.getState().restoreSession();
 
@@ -191,13 +197,18 @@ describe('session store', () => {
     const secondAccount = { ...verifiedAccount, id: 'account-2' };
     mocks.get.mockResolvedValue({ accessToken: 'access-1', refreshToken: 'refresh-1' });
     mocks.getRefreshToken.mockResolvedValue('refresh-2');
-    mocks.getMe.mockResolvedValue(secondAccount);
+    mocks.refresh.mockResolvedValue({
+      access_token: 'access-2',
+      account: secondAccount,
+      refresh_token: 'refresh-2-rotated',
+    });
     mocks.saveSession.mockResolvedValue([{ account: secondAccount, lastUsedAt: '2026-01-01' }]);
 
     await useSessionStore.getState().activateAccount(secondAccount.id);
 
-    expect(mocks.set).toHaveBeenCalledWith(null, 'refresh-2');
-    expect(mocks.saveSession).toHaveBeenCalledWith(secondAccount, 'refresh-1');
+    expect(mocks.refresh).toHaveBeenCalledWith('refresh-2');
+    expect(mocks.set).toHaveBeenCalledWith('access-2', 'refresh-2-rotated');
+    expect(mocks.saveSession).toHaveBeenCalledWith(secondAccount, 'refresh-2-rotated');
     expect(useSessionStore.getState()).toMatchObject({ account: secondAccount });
   });
 });

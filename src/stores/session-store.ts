@@ -78,16 +78,19 @@ export const useSessionStore = create<SessionState>((set) => ({
       if (!refreshToken) continue;
 
       try {
-        await tokenStorage.set(null, refreshToken);
-        const account = await authApi.getMe();
-        const { refreshToken: renewedRefreshToken } = await tokenStorage.get();
+        const response = await authApi.refresh(refreshToken);
+        await tokenStorage.set(response.access_token, response.refresh_token);
         const nextSessions = await accountSessionStorage.save(
-          account,
-          renewedRefreshToken ?? refreshToken,
+          response.account,
+          response.refresh_token,
         );
         const hasPendingOnboarding =
-          (await onboardingStorage.getCompletionState(account.id)) === false;
-        set({ account, sessions: nextSessions, status: getStatus(account, hasPendingOnboarding) });
+          (await onboardingStorage.getCompletionState(response.account.id)) === false;
+        set({
+          account: response.account,
+          sessions: nextSessions,
+          status: getStatus(response.account, hasPendingOnboarding),
+        });
         return;
       } catch {
         if (candidate.accountId) await accountSessionStorage.remove(candidate.accountId);
@@ -105,16 +108,19 @@ export const useSessionStore = create<SessionState>((set) => ({
       throw new Error('A sessão desta conta não está disponível neste dispositivo.');
 
     try {
-      await tokenStorage.set(null, refreshToken);
-      const account = await authApi.getMe();
-      const { refreshToken: renewedRefreshToken } = await tokenStorage.get();
-      const sessions = await accountSessionStorage.save(
-        account,
-        renewedRefreshToken ?? refreshToken,
-      );
+      const response = await authApi.refresh(refreshToken);
+      if (response.account.id !== accountId) {
+        throw new Error('A sessão selecionada não corresponde à conta solicitada.');
+      }
+      await tokenStorage.set(response.access_token, response.refresh_token);
+      const sessions = await accountSessionStorage.save(response.account, response.refresh_token);
       const hasPendingOnboarding =
-        (await onboardingStorage.getCompletionState(account.id)) === false;
-      set({ account, sessions, status: getStatus(account, hasPendingOnboarding) });
+        (await onboardingStorage.getCompletionState(response.account.id)) === false;
+      set({
+        account: response.account,
+        sessions,
+        status: getStatus(response.account, hasPendingOnboarding),
+      });
     } catch (error) {
       if (currentTokens.refreshToken) {
         await tokenStorage.set(currentTokens.accessToken, currentTokens.refreshToken);
