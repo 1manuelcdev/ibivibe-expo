@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BottomSheet } from '@/components/BottomSheet';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
+import type { Account } from '@/types/auth';
 
 export function AccountSwitcherSheet({
   onClose,
@@ -14,33 +17,51 @@ export function AccountSwitcherSheet({
   visible: boolean;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const account = useSessionStore((state) => state.account);
-  const accountName = account?.display_name ?? account?.name ?? account?.email ?? 'Conta atual';
+  const sessions = useSessionStore((state) => state.sessions);
+  const activateAccount = useSessionStore((state) => state.activateAccount);
+  const [switchingAccountId, setSwitchingAccountId] = useState<string | null>(null);
 
   function goTo(path: '/(auth)/login' | '/(auth)/register') {
     onClose();
     router.push(path);
   }
 
+  async function switchAccount(accountId: string) {
+    if (accountId === account?.id || switchingAccountId) return;
+
+    setSwitchingAccountId(accountId);
+    try {
+      await activateAccount(accountId);
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      onClose();
+      router.replace('/(app)/home');
+    } catch {
+      Alert.alert(
+        'Não foi possível alternar a conta',
+        'Entre novamente nesta conta para continuar.',
+      );
+    } finally {
+      setSwitchingAccountId(null);
+    }
+  }
+
   return (
     <BottomSheet onClose={onClose} visible={visible}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Alternar conta</Text>
-        <Text style={styles.sectionTitle}>Conta ativa</Text>
-        {account && (
-          <View style={styles.activeAccount}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{accountName.slice(0, 1).toUpperCase()}</Text>
-            </View>
-            <View style={styles.accountInfo}>
-              <Text style={styles.accountName}>{accountName}</Text>
-              <Text style={styles.muted}>
-                {account.type === 'business' ? 'Empresa' : `@${account.slug ?? account.email}`}
-              </Text>
-            </View>
-            <Ionicons color={colors.primary} name="checkmark-circle" size={23} />
-          </View>
-        )}
+        <Text style={styles.sectionTitle}>Contas neste dispositivo</Text>
+        {sessions.map(({ account: sessionAccount }) => (
+          <AccountRow
+            account={sessionAccount}
+            key={sessionAccount.id}
+            loading={switchingAccountId === sessionAccount.id}
+            onPress={() => void switchAccount(sessionAccount.id)}
+            selected={sessionAccount.id === account?.id}
+          />
+        ))}
         <SheetAction
           icon="log-in-outline"
           label="Entrar com outra conta"
@@ -62,6 +83,48 @@ export function AccountSwitcherSheet({
         />
       </ScrollView>
     </BottomSheet>
+  );
+}
+
+function AccountRow({
+  account,
+  loading,
+  onPress,
+  selected,
+}: {
+  account: Account;
+  loading: boolean;
+  onPress: () => void;
+  selected: boolean;
+}) {
+  const accountName = account.display_name ?? account.name ?? account.email ?? 'Conta';
+
+  return (
+    <Pressable
+      accessibilityState={{ busy: loading, selected }}
+      disabled={loading || selected}
+      onPress={onPress}
+      style={[styles.accountRow, selected && styles.activeAccount]}
+    >
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>{accountName.slice(0, 1).toUpperCase()}</Text>
+      </View>
+      <View style={styles.accountInfo}>
+        <Text numberOfLines={1} style={styles.accountName}>
+          {accountName}
+        </Text>
+        <Text numberOfLines={1} style={styles.muted}>
+          {account.type === 'business' ? 'Empresa' : `@${account.slug ?? account.email}`}
+        </Text>
+      </View>
+      {loading ? (
+        <Text style={styles.muted}>Entrando…</Text>
+      ) : selected ? (
+        <Ionicons color={colors.primary} name="checkmark-circle" size={23} />
+      ) : (
+        <Ionicons color={colors.mutedForeground} name="chevron-forward" size={18} />
+      )}
+    </Pressable>
   );
 }
 
@@ -106,16 +169,17 @@ const styles = {
     fontSize: 13,
     marginTop: 4,
   },
-  activeAccount: {
+  accountRow: {
     alignItems: 'center' as const,
-    backgroundColor: '#24242A',
-    borderColor: colors.primary,
+    backgroundColor: '#1E1E23',
+    borderColor: colors.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row' as const,
     gap: 12,
     padding: 12,
   },
+  activeAccount: { backgroundColor: '#24242A', borderColor: colors.primary },
   avatar: {
     alignItems: 'center' as const,
     backgroundColor: colors.primary,
