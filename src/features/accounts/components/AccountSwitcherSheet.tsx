@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BottomSheet } from '@/components/BottomSheet';
 import { useSessionStore } from '@/stores/session-store';
@@ -98,6 +98,8 @@ function AccountRow({
   selected: boolean;
 }) {
   const accountName = account.display_name ?? account.name ?? account.email ?? 'Conta';
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const avatarUrl = account.avatar_url;
 
   return (
     <Pressable
@@ -107,7 +109,15 @@ function AccountRow({
       style={[styles.accountRow, selected && styles.activeAccount]}
     >
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{accountName.slice(0, 1).toUpperCase()}</Text>
+        {avatarUrl && !avatarFailed ? (
+          <Image
+            onError={() => setAvatarFailed(true)}
+            source={{ uri: avatarUrl }}
+            style={styles.avatarImage}
+          />
+        ) : (
+          <Text style={styles.avatarText}>{accountName.slice(0, 1).toUpperCase()}</Text>
+        )}
       </View>
       <View style={styles.accountInfo}>
         <Text numberOfLines={1} style={styles.accountName}>
@@ -186,9 +196,11 @@ const styles = {
     borderRadius: 20,
     height: 40,
     justifyContent: 'center' as const,
+    overflow: 'hidden' as const,
     width: 40,
   },
   avatarText: { color: colors.primaryForeground, fontFamily: 'DMSans-Bold', fontSize: 17 },
+  avatarImage: { height: 40, width: 40 },
   accountInfo: { flex: 1, gap: 3 },
   accountName: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
   muted: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
