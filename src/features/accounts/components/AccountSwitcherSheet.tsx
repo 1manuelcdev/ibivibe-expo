@@ -53,15 +53,19 @@ export function AccountSwitcherSheet({
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Alternar conta</Text>
         <Text style={styles.sectionTitle}>Contas neste dispositivo</Text>
-        {sessions.map(({ account: sessionAccount }) => (
-          <AccountRow
-            account={sessionAccount}
-            key={sessionAccount.id}
-            loading={switchingAccountId === sessionAccount.id}
-            onPress={() => void switchAccount(sessionAccount.id)}
-            selected={sessionAccount.id === account?.id}
-          />
-        ))}
+        {sessions.map(({ account: sessionAccount }) => {
+          const resolvedAccount = sessionAccount.id === account?.id ? account : sessionAccount;
+          return (
+            <AccountRow
+              account={resolvedAccount}
+              key={sessionAccount.id}
+              loading={switchingAccountId === sessionAccount.id}
+              onPress={() => void switchAccount(sessionAccount.id)}
+              selected={sessionAccount.id === account?.id}
+            />
+          );
+        })}
+
         <SheetAction
           icon="log-in-outline"
           label="Entrar com outra conta"
