@@ -57,7 +57,7 @@ describe('auth API', () => {
 
     await expect(authApi.refresh('account-2-refresh')).resolves.toEqual(response.data);
 
-    expect(mocks.post).toHaveBeenCalledWith('/auth/refresh', null, {
+    expect(mocks.post).toHaveBeenCalledWith('/auth/refresh', {}, {
       headers: { 'x-refresh-token': 'account-2-refresh' },
     });
   });
