@@ -12,6 +12,17 @@ export const authApi = {
     return data;
   },
 
+  async refresh(refreshToken: string) {
+    const { data } = await apiClient.post<AuthResponse>(
+      '/auth/refresh',
+      {},
+      {
+        headers: { 'x-refresh-token': refreshToken },
+      },
+    );
+    return data;
+  },
+
   async getMe() {
     const { data } = await apiClient.get<Account>('/auth/me');
     return data;

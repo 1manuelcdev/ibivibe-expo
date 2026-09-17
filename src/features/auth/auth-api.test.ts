@@ -45,6 +45,23 @@ describe('auth API', () => {
     expect(mocks.post).toHaveBeenCalledWith('/auth/register', input);
   });
 
+  it('refreshes a selected account with its own refresh token', async () => {
+    const response = {
+      data: {
+        access_token: 'new-access',
+        account: { id: 'account-2' },
+        refresh_token: 'new-refresh',
+      },
+    };
+    mocks.post.mockResolvedValue(response);
+
+    await expect(authApi.refresh('account-2-refresh')).resolves.toEqual(response.data);
+
+    expect(mocks.post).toHaveBeenCalledWith('/auth/refresh', {}, {
+      headers: { 'x-refresh-token': 'account-2-refresh' },
+    });
+  });
+
   it('loads the current account and supports verification recovery actions', async () => {
     mocks.get.mockResolvedValue({ data: { id: 'account-1' } });
     mocks.post.mockResolvedValue({ data: undefined });

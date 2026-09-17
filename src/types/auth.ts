@@ -3,6 +3,7 @@ export type Account = {
   email: string;
   name?: string;
   display_name?: string;
+  avatar_url?: string | null;
   slug?: string;
   email_verified?: boolean;
   is_verified?: boolean;

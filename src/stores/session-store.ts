@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 
 import { authApi } from '@/features/auth/auth-api';
+import {
+  accountSessionStorage,
+  type StoredAccountSession,
+} from '@/storage/account-session-storage';
 import { onboardingStorage } from '@/storage/onboarding-storage';
 import { tokenStorage } from '@/storage/token-storage';
 import type { Account, AuthResponse, LoginInput, RegisterInput } from '@/types/auth';
@@ -15,7 +19,10 @@ export type SessionStatus =
 type SessionState = {
   status: SessionStatus;
   account: Account | null;
+  sessions: StoredAccountSession[];
   restoreSession: () => Promise<void>;
+  activateAccount: (accountId: string) => Promise<void>;
+  removeAccount: (accountId: string) => Promise<void>;
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   setAuthResponse: (response: AuthResponse) => Promise<void>;
@@ -23,6 +30,11 @@ type SessionState = {
   completeOnboarding: (account: Account) => Promise<void>;
   updateAccount: (account: Account) => void;
   logout: () => Promise<void>;
+};
+
+type SessionCandidate = {
+  accountId: string | null;
+  refreshToken: string | null;
 };
 
 function getStatus(account: Account, hasPendingOnboarding = false): SessionStatus {
@@ -36,23 +48,101 @@ function getStatus(account: Account, hasPendingOnboarding = false): SessionStatu
 export const useSessionStore = create<SessionState>((set) => ({
   status: 'boot',
   account: null,
+  sessions: [],
 
   restoreSession: async () => {
-    const { accessToken, refreshToken } = await tokenStorage.get();
+    const sessions = await accountSessionStorage.list();
+    const activeAccountId = await accountSessionStorage.getActiveAccountId();
+    const { refreshToken: legacyRefreshToken } = await tokenStorage.get();
+    const orderedSessions = activeAccountId
+      ? [
+          ...sessions.filter((session) => session.account.id === activeAccountId),
+          ...sessions.filter((session) => session.account.id !== activeAccountId),
+        ]
+      : sessions;
+    const candidates: SessionCandidate[] = orderedSessions.map((session) => ({
+      accountId: session.account.id,
+      refreshToken: null,
+    }));
 
-    if (!accessToken || !refreshToken) {
-      set({ status: 'anonymous', account: null });
+    if (!candidates.length && legacyRefreshToken) {
+      candidates.push({ accountId: null, refreshToken: legacyRefreshToken });
+    }
+
+    for (const candidate of candidates) {
+      const refreshToken =
+        candidate.refreshToken ??
+        (candidate.accountId
+          ? await accountSessionStorage.getRefreshToken(candidate.accountId)
+          : null);
+      if (!refreshToken) continue;
+
+      try {
+        const response = await authApi.refresh(refreshToken);
+        await tokenStorage.set(response.access_token, response.refresh_token);
+        const nextSessions = await accountSessionStorage.save(
+          response.account,
+          response.refresh_token,
+        );
+        const hasPendingOnboarding =
+          (await onboardingStorage.getCompletionState(response.account.id)) === false;
+        set({
+          account: response.account,
+          sessions: nextSessions,
+          status: getStatus(response.account, hasPendingOnboarding),
+        });
+        return;
+      } catch {
+        if (candidate.accountId) await accountSessionStorage.remove(candidate.accountId);
+      }
+    }
+
+    await tokenStorage.clear();
+    set({ status: 'anonymous', account: null, sessions: await accountSessionStorage.list() });
+  },
+
+  activateAccount: async (accountId) => {
+    const currentTokens = await tokenStorage.get();
+    const refreshToken = await accountSessionStorage.getRefreshToken(accountId);
+    if (!refreshToken)
+      throw new Error('A sessão desta conta não está disponível neste dispositivo.');
+
+    try {
+      const response = await authApi.refresh(refreshToken);
+      if (response.account.id !== accountId) {
+        throw new Error('A sessão selecionada não corresponde à conta solicitada.');
+      }
+      await tokenStorage.set(response.access_token, response.refresh_token);
+      const sessions = await accountSessionStorage.save(response.account, response.refresh_token);
+      const hasPendingOnboarding =
+        (await onboardingStorage.getCompletionState(response.account.id)) === false;
+      set({
+        account: response.account,
+        sessions,
+        status: getStatus(response.account, hasPendingOnboarding),
+      });
+    } catch (error) {
+      if (currentTokens.refreshToken) {
+        await tokenStorage.set(currentTokens.accessToken, currentTokens.refreshToken);
+      } else {
+        await tokenStorage.clear();
+      }
+      throw error;
+    }
+  },
+
+  removeAccount: async (accountId) => {
+    const isActive = useSessionStore.getState().account?.id === accountId;
+    const sessions = await accountSessionStorage.remove(accountId);
+
+    if (isActive) {
+      await tokenStorage.clear();
+      set({ account: null, sessions, status: 'boot' });
+      await useSessionStore.getState().restoreSession();
       return;
     }
 
-    try {
-      const account = await authApi.getMe();
-      const hasPendingOnboarding = (await onboardingStorage.getCompletionState(account.id)) === false;
-      set({ status: getStatus(account, hasPendingOnboarding), account });
-    } catch {
-      await tokenStorage.clear();
-      set({ status: 'anonymous', account: null });
-    }
+    set({ sessions });
   },
 
   login: async (input) => {
@@ -69,8 +159,9 @@ export const useSessionStore = create<SessionState>((set) => ({
   },
 
   setAuthResponse: async (response) => {
+    const sessions = await accountSessionStorage.save(response.account, response.refresh_token);
     await tokenStorage.set(response.access_token, response.refresh_token);
-    set({ status: getStatus(response.account), account: response.account });
+    set({ status: getStatus(response.account), account: response.account, sessions });
   },
 
   completeEmailVerification: async () => {
@@ -89,11 +180,25 @@ export const useSessionStore = create<SessionState>((set) => ({
   },
 
   updateAccount: (account) => {
-    set((state) => (state.account?.id === account.id ? { account } : state));
+    set((state) =>
+      state.account?.id === account.id
+        ? {
+            account,
+            sessions: state.sessions.map((session) =>
+              session.account.id === account.id ? { ...session, account } : session,
+            ),
+          }
+        : state,
+    );
   },
 
   logout: async () => {
-    await tokenStorage.clear();
-    set({ status: 'anonymous', account: null });
+    const accountId = useSessionStore.getState().account?.id;
+    if (!accountId) {
+      await tokenStorage.clear();
+      set({ status: 'anonymous', account: null, sessions: [] });
+      return;
+    }
+    await useSessionStore.getState().removeAccount(accountId);
   },
 }));

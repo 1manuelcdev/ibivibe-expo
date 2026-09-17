@@ -10,12 +10,20 @@ export default function Index() {
   const restoreSession = useSessionStore((state) => state.restoreSession);
 
   useEffect(() => {
+    if (status !== 'boot') return;
     void restoreSession();
-  }, [restoreSession]);
+  }, [restoreSession, status]);
 
   if (status === 'boot') {
     return (
-      <SafeAreaView style={{ alignItems: 'center', backgroundColor: '#0A0A0A', flex: 1, justifyContent: 'center' }}>
+      <SafeAreaView
+        style={{
+          alignItems: 'center',
+          backgroundColor: '#0A0A0A',
+          flex: 1,
+          justifyContent: 'center',
+        }}
+      >
         <ActivityIndicator />
       </SafeAreaView>
     );

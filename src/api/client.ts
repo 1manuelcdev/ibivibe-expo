@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 
+import { accountSessionStorage } from '@/storage/account-session-storage';
 import { tokenStorage } from '@/storage/token-storage';
 
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1';
@@ -68,6 +69,10 @@ async function refreshAccessToken() {
     });
 
     await tokenStorage.set(data.access_token, data.refresh_token);
+    const activeAccountId = await accountSessionStorage.getActiveAccountId();
+    if (activeAccountId) {
+      await accountSessionStorage.updateRefreshToken(activeAccountId, data.refresh_token);
+    }
     return data.access_token;
   } catch {
     await tokenStorage.clear();
