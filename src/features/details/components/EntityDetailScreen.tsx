@@ -28,15 +28,25 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
   const { accountId, add, favorites, remove } = useFavoritesViewModel();
   const data = query.data as CityDetail | EventDetail | BusinessDetail | undefined;
 
+  function goBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (kind === 'event') {
+      router.replace('/(app)/events');
+    } else {
+      router.back();
+    }
+  }
+
   if (query.isLoading)
     return (
-      <DetailShell onBack={() => router.back()}>
+      <DetailShell onBack={goBack}>
         <Loading />
       </DetailShell>
     );
   if (query.isError || !data)
     return (
-      <DetailShell onBack={() => router.back()}>
+      <DetailShell onBack={goBack}>
         <Empty
           icon="alert-circle-outline"
           text={`Erro ao carregar ${kind === 'city' ? 'cidade' : kind === 'event' ? 'evento' : 'empresa'}.`}
@@ -98,7 +108,7 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
   }
 
   return (
-    <DetailShell onBack={() => router.back()}>
+    <DetailShell onBack={goBack}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Media
           image={image}

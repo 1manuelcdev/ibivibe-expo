@@ -23,7 +23,14 @@ export function MyEventsScreen() {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Voltar" hitSlop={8} onPress={() => router.back()}>
+          <Pressable
+            accessibilityLabel="Voltar"
+            hitSlop={8}
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace('/(app)/accounts');
+            }}
+          >
             <Ionicons color={colors.foreground} name="arrow-back" size={25} />
           </Pressable>
           <Text style={styles.title}>Meus Eventos</Text>

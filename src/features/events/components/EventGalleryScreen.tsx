@@ -153,7 +153,14 @@ export function EventGalleryScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()}>
+        <Pressable
+          accessibilityLabel="Voltar"
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else if (eventId) router.replace(`/(app)/events/edit/${eventId}`);
+            else router.replace('/(app)/events/new');
+          }}
+        >
           <Ionicons color={colors.foreground} name="arrow-back" size={25} />
         </Pressable>
         <Text style={styles.title}>Galeria de mídias</Text>

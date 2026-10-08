@@ -181,7 +181,8 @@ function EventForm({ eventId, initialEvent }: { eventId?: string; initialEvent?:
       mediaItems.forEach((item) => {
         if (item.prepared) cleanupPreparedImage(item.prepared);
       });
-      router.back();
+      if (router.canGoBack()) router.back();
+      else router.replace('/(app)/events/manage');
     },
   });
 
@@ -271,7 +272,14 @@ function EventForm({ eventId, initialEvent }: { eventId?: string; initialEvent?:
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" hitSlop={8} onPress={() => router.back()}>
+        <Pressable
+          accessibilityLabel="Voltar"
+          hitSlop={8}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/(app)/events/manage');
+          }}
+        >
           <Ionicons color={colors.foreground} name="arrow-back" size={20} />
         </Pressable>
         <Text style={styles.title}>{eventId ? 'Editar Evento' : 'Novo Evento'}</Text>
@@ -319,7 +327,7 @@ function EventForm({ eventId, initialEvent }: { eventId?: string; initialEvent?:
             value={name}
           />
         </Field>
-        <Field label="Descrição">
+        <Field label="Descrição" required>
           <TextInput
             maxLength={300}
             multiline
