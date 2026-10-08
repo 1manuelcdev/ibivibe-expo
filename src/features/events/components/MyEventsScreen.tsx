@@ -18,8 +18,9 @@ export function MyEventsScreen() {
   });
 
   const events = query.data ?? [];
-  const activeEvents = events.filter((event) => !isPast(event));
-  const pastEvents = events.filter(isPast);
+  const draftEvents = events.filter((event) => event.status === 'draft');
+  const activeEvents = events.filter((event) => event.status !== 'draft' && !isPast(event));
+  const pastEvents = events.filter((event) => event.status !== 'draft' && isPast(event));
 
   return (
     <View style={styles.screen}>
@@ -73,6 +74,12 @@ export function MyEventsScreen() {
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
               onOptionsPress={setOptionsEvent}
               title="Passados"
+            />
+            <EventSection
+              events={draftEvents}
+              onEventPress={(event) => router.push(`/(app)/events/edit/${event.id}`)}
+              onOptionsPress={setOptionsEvent}
+              title="Rascunhos"
             />
           </>
         ) : null}
