@@ -22,13 +22,25 @@ import { colors } from '@/theme/tokens';
 
 type Kind = 'city' | 'event' | 'business';
 
-export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
+export function EntityDetailScreen({
+  id,
+  kind,
+  origin,
+}: {
+  id: string;
+  kind: Kind;
+  origin?: 'home';
+}) {
   const router = useRouter();
   const query = useDetailViewModel(kind, id);
   const { accountId, add, favorites, remove } = useFavoritesViewModel();
   const data = query.data as CityDetail | EventDetail | BusinessDetail | undefined;
 
   function goBack() {
+    if (kind === 'event' && origin === 'home') {
+      router.replace('/(app)/home');
+      return;
+    }
     if (router.canGoBack()) {
       router.back();
     } else if (kind === 'event') {

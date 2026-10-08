@@ -5,10 +5,10 @@ import { EntityDetailScreen } from '@/features/details/components/EntityDetailSc
 import { colors } from '@/theme/tokens';
 
 export default function EventDetailRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, origin } = useLocalSearchParams<{ id: string; origin?: string }>();
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background, flex: 1 }}>
-      <EntityDetailScreen id={id} kind="event" />
+      <EntityDetailScreen id={id} kind="event" origin={origin === 'home' ? 'home' : undefined} />
     </SafeAreaView>
   );
 }

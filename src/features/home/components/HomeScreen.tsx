@@ -129,7 +129,12 @@ export function HomeScreen() {
                 <EventCard
                   key={event.id}
                   {...event}
-                  onPress={() => router.push(`/(app)/events/${event.id}`)}
+                  onPress={() =>
+                    router.push({
+                      params: { id: event.id, origin: 'home' },
+                      pathname: '/(app)/events/[id]',
+                    })
+                  }
                 />
               ))}
             </HorizontalCards>
