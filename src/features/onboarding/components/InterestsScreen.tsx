@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { onboardingApi } from '@/features/onboarding/onboarding-api';
 import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
-import { useOnboardingInterestsData } from '@/features/onboarding/viewmodels/useOnboardingData';
+import { useOnboardingTags } from '@/features/onboarding/viewmodels/useOnboardingData';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -24,7 +24,7 @@ export function InterestsScreen({ type }: { type: InterestType }) {
   const account = useSessionStore((state) => state.account);
   const completeOnboarding = useSessionStore((state) => state.completeOnboarding);
   const updateAccount = useSessionStore((state) => state.updateAccount);
-  const { tagGroups, tags } = useOnboardingInterestsData();
+  const tags = useOnboardingTags(type === 'businesses' ? 'business' : 'event');
   const previous = (account as typeof account & AccountWithInterests)?.interests;
   const [selected, setSelected] = useState<string[]>(previous?.[type] ?? []);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,19 +32,15 @@ export function InterestsScreen({ type }: { type: InterestType }) {
 
   const groups = useMemo(() => {
     const loadedTags = tags.data ?? [];
-    const loadedGroups = tagGroups.data ?? [];
-    const knownGroups = loadedGroups.map((group) => ({
-      id: group.id,
-      name: group.name,
-      tags: loadedTags.filter((tag) => tag.group_id === group.id),
-    }));
-    const ungrouped = loadedTags.filter(
-      (tag) => !loadedGroups.some((group) => group.id === tag.group_id),
-    );
-    return ungrouped.length
-      ? [...knownGroups, { id: 'other', name: 'Outros', tags: ungrouped }]
-      : knownGroups;
-  }, [tagGroups.data, tags.data]);
+    const groupsById = new Map<string, { id: string; name: string; tags: OnboardingTag[] }>();
+    for (const tag of loadedTags) {
+      const group = tag.group ?? { id: tag.group_id, name: 'Outros' };
+      const current = groupsById.get(group.id) ?? { ...group, tags: [] };
+      current.tags.push(tag);
+      groupsById.set(group.id, current);
+    }
+    return [...groupsById.values()];
+  }, [tags.data]);
 
   function toggle(tagId: string) {
     setSelected((current) =>
@@ -89,8 +85,8 @@ export function InterestsScreen({ type }: { type: InterestType }) {
     await continueFlow([]);
   }
 
-  const isLoading = tagGroups.isLoading || tags.isLoading;
-  const error = tagGroups.isError || tags.isError;
+  const isLoading = tags.isLoading;
+  const error = tags.isError;
 
   return (
     <SafeAreaView style={styles.screen}>

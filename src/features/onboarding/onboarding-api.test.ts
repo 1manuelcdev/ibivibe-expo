@@ -25,11 +25,23 @@ describe('onboarding API', () => {
     expect(mocks.get).toHaveBeenNthCalledWith(3, '/cities');
   });
 
+  it('loads tags filtered by the target entity type', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await onboardingApi.getTagsByTargetType('business');
+
+    expect(mocks.get).toHaveBeenCalledWith('/tags', {
+      params: { target_type: 'business' },
+    });
+  });
+
   it('persists interests scoped to the active account', async () => {
     const interests = { businesses: ['business-tag'], events: ['event-tag'] };
     mocks.patch.mockResolvedValue({ data: { count: 2 } });
 
-    await expect(onboardingApi.saveInterests('account-1', interests)).resolves.toEqual({ count: 2 });
+    await expect(onboardingApi.saveInterests('account-1', interests)).resolves.toEqual({
+      count: 2,
+    });
 
     expect(mocks.patch).toHaveBeenCalledWith('/accounts/account-1/interests', interests);
   });

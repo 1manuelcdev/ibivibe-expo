@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { onboardingApi } from '@/features/onboarding/onboarding-api';
+import type { TagTargetType } from '@/features/onboarding/models/onboarding-types';
 
 export const onboardingQueryKeys = {
   cities: ['onboarding', 'cities'] as const,
@@ -21,6 +22,14 @@ export function useOnboardingInterestsData() {
   });
 
   return { tagGroups, tags };
+}
+
+export function useOnboardingTags(targetType: TagTargetType) {
+  return useQuery({
+    queryFn: () => onboardingApi.getTagsByTargetType(targetType),
+    queryKey: [...onboardingQueryKeys.tags, targetType] as const,
+    staleTime: 10 * 60_000,
+  });
 }
 
 export function useOnboardingCities() {
