@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
 
 import { eventApi } from '@/features/events/event-api';
 import { useEventDraftStore } from '@/features/events/event-draft-store';
@@ -10,6 +11,7 @@ import { colors } from '@/theme/tokens';
 
 export function MyEventsScreen() {
   const router = useRouter();
+  const [optionsEvent, setOptionsEvent] = useState<Event | null>(null);
   const query = useQuery({
     queryFn: eventApi.getOwned,
     queryKey: ['my-events'],
@@ -63,22 +65,28 @@ export function MyEventsScreen() {
             <EventSection
               events={activeEvents}
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
-              onOptionsPress={(event) =>
-                showEventOptions(event, () => router.push(`/(app)/events/edit/${event.id}`))
-              }
+              onOptionsPress={setOptionsEvent}
               title="Ativos agora"
             />
             <EventSection
               events={pastEvents}
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
-              onOptionsPress={(event) =>
-                showEventOptions(event, () => router.push(`/(app)/events/edit/${event.id}`))
-              }
+              onOptionsPress={setOptionsEvent}
               title="Passados"
             />
           </>
         ) : null}
       </ScrollView>
+      <EventOptionsModal
+        event={optionsEvent}
+        onClose={() => setOptionsEvent(null)}
+        onEdit={() => {
+          if (!optionsEvent) return;
+          const eventId = optionsEvent.id;
+          setOptionsEvent(null);
+          router.push(`/(app)/events/edit/${eventId}`);
+        }}
+      />
     </View>
   );
 }
@@ -132,7 +140,7 @@ function EventSection({
               onPress={() => onOptionsPress(event)}
               style={styles.optionsButton}
             >
-              <Text style={styles.optionsLabel}>...</Text>
+              <Ionicons color={colors.foreground} name="ellipsis-horizontal" size={19} />
             </Pressable>
           </View>
         ))}
@@ -154,11 +162,51 @@ function EventsState({ onRetry, text }: { onRetry?: () => void; text: string }) 
   );
 }
 
-function showEventOptions(event: Event, onEdit: () => void) {
-  Alert.alert(event.name, 'Escolha uma ação para este evento.', [
-    { text: 'Editar', onPress: onEdit },
-    { text: 'Cancelar', style: 'cancel' },
-  ]);
+function EventOptionsModal({
+  event,
+  onClose,
+  onEdit,
+}: {
+  event: Event | null;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={Boolean(event)}>
+      <Pressable onPress={onClose} style={styles.modalOverlay}>
+        <Pressable onPress={() => undefined} style={styles.optionsCard}>
+          <View style={styles.optionsHeader}>
+            <View style={styles.optionsIcon}>
+              <Ionicons color={colors.primary} name="calendar-outline" size={20} />
+            </View>
+            <View style={styles.optionsHeading}>
+              <Text numberOfLines={1} style={styles.optionsTitle}>
+                {event?.name}
+              </Text>
+              <Text style={styles.optionsCopy}>Gerencie este evento</Text>
+            </View>
+            <Pressable accessibilityLabel="Fechar opções" hitSlop={8} onPress={onClose}>
+              <Ionicons color={colors.mutedForeground} name="close" size={21} />
+            </Pressable>
+          </View>
+          <View style={styles.optionsDivider} />
+          <Pressable onPress={onEdit} style={styles.optionAction}>
+            <View style={styles.optionActionIcon}>
+              <Ionicons color={colors.foreground} name="create-outline" size={19} />
+            </View>
+            <View style={styles.optionActionText}>
+              <Text style={styles.optionActionTitle}>Editar evento</Text>
+              <Text style={styles.optionActionCopy}>Altere dados, tags e mídias</Text>
+            </View>
+            <Ionicons color={colors.mutedForeground} name="chevron-forward" size={18} />
+          </Pressable>
+          <Pressable onPress={onClose} style={styles.cancelAction}>
+            <Text style={styles.cancelActionLabel}>Cancelar</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
 }
 
 function isPast(event: Event) {
@@ -245,11 +293,64 @@ const styles = {
   badgeLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 10 },
   optionsButton: {
     alignItems: 'center' as const,
+    backgroundColor: '#27272A',
+    borderColor: colors.border,
+    borderRadius: 18,
+    borderWidth: 1,
     height: 40,
     justifyContent: 'center' as const,
     width: 32,
   },
-  optionsLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  modalOverlay: {
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(0,0,0,0.62)',
+    flex: 1,
+    justifyContent: 'center' as const,
+    padding: 24,
+  },
+  optionsCard: {
+    backgroundColor: '#18181B',
+    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    maxWidth: 420,
+    padding: 16,
+    width: '100%' as const,
+  },
+  optionsHeader: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 10 },
+  optionsIcon: {
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(159,255,139,0.12)',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center' as const,
+    width: 40,
+  },
+  optionsHeading: { flex: 1, gap: 2, minWidth: 0 },
+  optionsTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
+  optionsCopy: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
+  optionsDivider: { backgroundColor: colors.border, height: 1, marginVertical: 16 },
+  optionAction: {
+    alignItems: 'center' as const,
+    backgroundColor: '#27272A',
+    borderRadius: 12,
+    flexDirection: 'row' as const,
+    gap: 10,
+    padding: 12,
+  },
+  optionActionIcon: {
+    alignItems: 'center' as const,
+    backgroundColor: '#3F3F46',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center' as const,
+    width: 32,
+  },
+  optionActionText: { flex: 1, gap: 2 },
+  optionActionTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  optionActionCopy: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
+  cancelAction: { alignItems: 'center' as const, paddingTop: 16 },
+  cancelActionLabel: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
   state: { alignItems: 'center' as const, gap: 12, paddingVertical: 32 },
   stateText: {
     color: colors.mutedForeground,
