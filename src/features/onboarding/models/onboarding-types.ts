@@ -1,7 +1,12 @@
+export type TagTargetType = 'city' | 'business' | 'event';
+
 export type OnboardingTag = {
   id: string;
   name: string;
   group_id: string;
+  slug?: string;
+  group?: OnboardingTagGroup;
+  targets?: Array<{ id: string; tag_id: string; target_type: TagTargetType }>;
 };
 
 export type OnboardingTagGroup = {

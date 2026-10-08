@@ -107,7 +107,7 @@ function EventRow({ item, onPress }: { item: HomeEvent; onPress: () => void }) {
       kind="event"
       meta={formatDate(item.start_date, item.end_date)}
       onPress={onPress}
-      tags={item.tags}
+      tags={item.tags?.map((tag) => tag.name)}
       title={item.name}
     />
   );

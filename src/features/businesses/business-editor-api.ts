@@ -2,7 +2,7 @@ import { apiClient } from '@/api/client';
 import type { PreparedImage } from '@/features/businesses/image-upload-service';
 import type { BusinessDetail } from '@/features/details/detail-api';
 import type { HomeBusiness } from '@/features/home/models/home-types';
-import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
+import type { OnboardingTag, TagTargetType } from '@/features/onboarding/models/onboarding-types';
 
 export type BusinessProfileUpdate = Pick<BusinessDetail, 'commercial_name' | 'description'> & {
   accessibility?: boolean;
@@ -49,13 +49,21 @@ export const businessEditorApi = {
     return business;
   },
 
-  async getEditorData(accountId: string) {
+  async getEditorData(accountId: string, tagTargetType: TagTargetType = 'business') {
     const business = await businessEditorApi.getForAccount(accountId);
     const [profile, tags] = await Promise.all([
       apiClient.get<BusinessDetail>(`/businesses/${business.id}/public-profile`),
-      apiClient.get<OnboardingTag[]>('/tags'),
+      apiClient.get<OnboardingTag[]>('/tags', { params: { target_type: tagTargetType } }),
     ]);
     return { business, profile: profile.data, tags: tags.data };
+  },
+
+  async getLocations(businessId: string) {
+    return (
+      await apiClient.get<NonNullable<BusinessDetail['locations']>>(
+        `/businesses/${businessId}/locations`,
+      )
+    ).data;
   },
 
   async updateProfile(businessId: string, payload: BusinessProfileUpdate) {

@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client';
+import type { Event } from '@/features/events/models/event-types';
 
 export type DetailMedia = { id?: string; url: string; media_type?: string; is_cover?: boolean };
 export type CityDetail = {
@@ -18,7 +19,10 @@ export type EventDetail = {
   start_date?: string;
   end_date?: string;
   type?: string;
-  tags?: string[];
+  cities?: Event['cities'];
+  medias?: Event['medias'];
+  status?: Event['status'];
+  tags?: Event['tags'];
 };
 export type BusinessDetail = {
   id: string;
@@ -31,7 +35,8 @@ export type BusinessDetail = {
   tags?: string[];
   contact?: Record<string, string | null>;
   locations?: Array<{
-    city?: { name?: string };
+    id?: string;
+    city?: { id?: string; name?: string };
     is_headquarter?: boolean;
     address?: string | null;
   }>;

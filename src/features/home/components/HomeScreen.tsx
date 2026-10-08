@@ -90,8 +90,8 @@ export function HomeScreen() {
     id: event.id,
     title: event.name,
     date: formatEventDate(event.start_date, event.end_date),
-    tags: event.tags?.slice(0, 3) ?? ['Evento'],
-    image: event.cover_img_url,
+    tags: event.tags?.slice(0, 3).map((tag) => tag.name) ?? ['Evento'],
+    image: event.cover_img_url ?? event.medias?.find((media) => media.is_cover)?.url,
   }));
   const businessItems = businessesQuery.data?.slice(0, 5).map((business) => ({
     id: business.id,
@@ -416,11 +416,7 @@ function BusinessCard({
 }) {
   return (
     <Pressable onPress={onPress} style={styles.horizontalCard}>
-      <RemoteImage
-        icon={fallbackImages.business}
-        source={image}
-        style={styles.businessAvatar}
-      />
+      <RemoteImage icon={fallbackImages.business} source={image} style={styles.businessAvatar} />
       <View style={styles.cardBody}>
         <Text numberOfLines={1} style={styles.cardTitle}>
           {title}
