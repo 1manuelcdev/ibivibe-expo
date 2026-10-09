@@ -6,13 +6,13 @@ export type ToastVariant = 'success' | 'info' | 'warning' | 'destructive';
 
 const toastVariants = {
   destructive: {
-    actionColor: '#FEF2F2',
-    backgroundColor: '#991B1B',
-    borderColor: '#F87171',
+    actionColor: '#FCA5A5',
+    backgroundColor: '#3B1F22',
+    borderColor: 'rgba(248,113,113,0.22)',
     icon: 'information-circle-outline' as const,
-    iconColor: '#FFFFFF',
-    progressColor: '#FFFFFF',
-    textColor: '#FFFFFF',
+    iconColor: '#FCA5A5',
+    progressColor: '#FCA5A5',
+    textColor: '#FCA5A5',
   },
   info: {
     actionColor: '#DBEAFE',
@@ -48,6 +48,7 @@ export function Toast({
   duration = 3000,
   message,
   onAction,
+  showProgress = false,
   variant = 'info',
   visible,
 }: {
@@ -55,6 +56,7 @@ export function Toast({
   duration?: number;
   message: string;
   onAction?: () => void;
+  showProgress?: boolean;
   variant?: ToastVariant;
   visible: boolean;
 }) {
@@ -65,7 +67,7 @@ export function Toast({
     progress.stopAnimation();
     progress.setValue(1);
 
-    if (!visible) return;
+    if (!visible || !showProgress) return;
 
     const animation = Animated.timing(progress, {
       duration,
@@ -75,7 +77,7 @@ export function Toast({
     animation.start();
 
     return () => animation.stop();
-  }, [duration, message, progress, visible]);
+  }, [duration, message, progress, showProgress, visible]);
 
   if (!visible) return null;
 
@@ -94,15 +96,17 @@ export function Toast({
           <Text style={[styles.actionLabel, { color: appearance.actionColor }]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
-      <View pointerEvents="none" style={styles.progressTrack}>
-        <Animated.View
-          style={[
-            styles.progress,
-            { backgroundColor: appearance.progressColor },
-            { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-          ]}
-        />
-      </View>
+      {showProgress ? (
+        <View pointerEvents="none" style={styles.progressTrack}>
+          <Animated.View
+            style={[
+              styles.progress,
+              { backgroundColor: appearance.progressColor },
+              { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+            ]}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }

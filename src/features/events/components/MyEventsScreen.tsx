@@ -257,6 +257,7 @@ export function MyEventsScreen() {
         duration={pendingDeletion ? 5000 : 3000}
         message={toastMessage ?? ''}
         onAction={undoDeletion}
+        showProgress={Boolean(pendingDeletion)}
         variant={toastVariant}
         visible={Boolean(toastMessage)}
       />
