@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
-import { Toast } from '@/components/Toast';
+import { Toast, type ToastVariant } from '@/components/Toast';
 import { eventApi } from '@/features/events/event-api';
 import { useEventDraftStore } from '@/features/events/event-draft-store';
 import type { Event } from '@/features/events/models/event-types';
@@ -34,6 +34,7 @@ export function MyEventsScreen() {
   const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory>('all');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<ToastVariant>('info');
   const query = useQuery({
     queryFn: eventApi.getOwned,
     queryKey: ['my-events'],
@@ -62,11 +63,13 @@ export function MyEventsScreen() {
     mutationFn: (eventId: string) => eventApi.remove(eventId),
     onError: async (error) => {
       await queryClient.invalidateQueries({ queryKey: ['my-events'] });
+      setToastVariant('destructive');
       setToastMessage(getApiErrorMessage(error));
       setToastTimer();
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['my-events'] });
+      setToastVariant('success');
       setToastMessage('Evento excluído.');
       setToastTimer();
     },
@@ -93,6 +96,7 @@ export function MyEventsScreen() {
       cachedEvents.filter((item) => item.id !== event.id),
     );
     setPendingDeletion({ event, index: index < 0 ? currentEvents.length : index });
+    setToastVariant('destructive');
     setToastMessage('Evento será excluído.');
 
     if (deletionTimer.current) clearTimeout(deletionTimer.current);
@@ -115,6 +119,7 @@ export function MyEventsScreen() {
       return restoredEvents;
     });
     setPendingDeletion(null);
+    setToastVariant('info');
     setToastMessage('Exclusão desfeita.');
     setToastTimer();
   }
@@ -252,6 +257,7 @@ export function MyEventsScreen() {
         duration={pendingDeletion ? 5000 : 3000}
         message={toastMessage ?? ''}
         onAction={undoDeletion}
+        variant={toastVariant}
         visible={Boolean(toastMessage)}
       />
     </View>
