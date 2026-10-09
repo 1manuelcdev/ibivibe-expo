@@ -101,8 +101,10 @@ export function AdminTagsScreen() {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <AppBackButton fallbackHref="/(app)/admin" />
-          <Text style={styles.title}>Editar tags</Text>
+          <View style={styles.headerStart}>
+            <AppBackButton fallbackHref="/(app)/admin" />
+            <Text style={styles.title}>Editar tags</Text>
+          </View>
           <Pressable accessibilityLabel="Criar grupo ou tag" hitSlop={8} onPress={() => setCreateVisible(true)}>
             <Ionicons color={colors.foreground} name="add" size={25} />
           </Pressable>
@@ -264,6 +266,7 @@ const styles = {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
   },
+  headerStart: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 16 },
   title: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 20 },
   description: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
   group: { borderBottomColor: colors.border, borderBottomWidth: 1, position: 'relative' as const },
