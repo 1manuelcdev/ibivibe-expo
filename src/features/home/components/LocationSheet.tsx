@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'rea
 
 import { BottomSheet } from '@/components/BottomSheet';
 import type { HomeCity } from '@/features/home/models/home-types';
+import { useEntityCoverUrls } from '@/features/medias/useEntityCoverUrls';
 import { colors } from '@/theme/tokens';
 
 export function LocationSheet({
@@ -24,7 +25,11 @@ export function LocationSheet({
   selectedCityId: string | null;
   visible: boolean;
 }) {
-  const previewImage = cities.find((city) => city.cover_img_url)?.cover_img_url;
+  const cityCoverUrls = useEntityCoverUrls(
+    'city',
+    cities.map((city) => city.id),
+  );
+  const previewImage = cities.map((city) => cityCoverUrls.get(city.id)).find(Boolean);
 
   return (
     <BottomSheet onClose={onClose} visible={visible}>

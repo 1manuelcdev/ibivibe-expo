@@ -5,6 +5,7 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
 import type { HomeBusiness, HomeCity, HomeEvent } from '@/features/home/models/home-types';
+import { useEntityCoverUrls } from '@/features/medias/useEntityCoverUrls';
 import { colors } from '@/theme/tokens';
 
 type OverviewKind = 'cities' | 'businesses' | 'events';
@@ -21,6 +22,10 @@ export function OverviewScreen({ kind }: { kind: OverviewKind }) {
       : kind === 'businesses'
         ? 'Novos no app'
         : 'Próximos eventos';
+  const cityCoverUrls = useEntityCoverUrls(
+    'city',
+    kind === 'cities' ? (query.data ?? []).map((city) => city.id) : [],
+  );
 
   function goBack() {
     if (router.canGoBack()) {
@@ -55,6 +60,7 @@ export function OverviewScreen({ kind }: { kind: OverviewKind }) {
               return (
                 <CityRow
                   key={item.id}
+                  image={cityCoverUrls.get(item.id)}
                   item={item as HomeCity}
                   onPress={() => router.push(`/(app)/cities/${item.id}`)}
                 />
@@ -85,10 +91,18 @@ export function OverviewScreen({ kind }: { kind: OverviewKind }) {
   );
 }
 
-function CityRow({ item, onPress }: { item: HomeCity; onPress: () => void }) {
+function CityRow({
+  image,
+  item,
+  onPress,
+}: {
+  image?: string | null;
+  item: HomeCity;
+  onPress: () => void;
+}) {
   return (
     <EntityRow
-      image={item.cover_img_url}
+      image={image}
       icon="location-outline"
       kind="city"
       onPress={onPress}
@@ -112,7 +126,7 @@ function BusinessRow({ item, onPress }: { item: HomeBusiness; onPress: () => voi
 function EventRow({ item, onPress }: { item: HomeEvent; onPress: () => void }) {
   return (
     <EntityRow
-      image={item.cover_img_url}
+      image={item.medias?.find((media) => media.is_cover)?.url}
       icon="calendar-outline"
       kind="event"
       meta={formatDate(item.start_date, item.end_date)}

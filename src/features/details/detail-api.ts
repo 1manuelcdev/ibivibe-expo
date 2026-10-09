@@ -7,7 +7,6 @@ export type CityDetail = {
   name: string;
   slug?: string;
   description?: string | null;
-  cover_img_url?: string | null;
   tags?: string[];
   media?: DetailMedia[];
 };
@@ -15,7 +14,6 @@ export type EventDetail = {
   id: string;
   name: string;
   description?: string | null;
-  cover_img_url?: string | null;
   start_date?: string;
   end_date?: string;
   type?: string;
