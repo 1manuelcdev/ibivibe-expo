@@ -8,7 +8,7 @@ import { ActionModal, ActionModalItem } from '@/components/ActionModal';
 import { AppBackButton } from '@/components/AppBackButton';
 import { TextField } from '@/components/TextField';
 import { isAdminAccount } from '@/features/admin/admin-access';
-import { adminApi } from '@/features/admin/admin-api';
+import { adminApi, type AdminTagGroup } from '@/features/admin/admin-api';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -16,6 +16,7 @@ export function AdminTagsScreen() {
   const account = useSessionStore((state) => state.account);
   const router = useRouter();
   const [createVisible, setCreateVisible] = useState(false);
+  const [groupOptions, setGroupOptions] = useState<AdminTagGroup | null>(null);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const groupsQuery = useQuery({ queryFn: adminApi.getTagGroups, queryKey: ['admin', 'tag-groups'] });
@@ -80,12 +81,12 @@ export function AdminTagsScreen() {
                 />
               </Pressable>
               <Pressable
-                accessibilityLabel={`Editar grupo ${group.name}`}
+                accessibilityLabel={`Opções de ${group.name}`}
                 hitSlop={8}
-                onPress={() => router.push(`/(app)/admin/tags/groups/${group.id}`)}
-                style={styles.groupEdit}
+                onPress={() => setGroupOptions(group)}
+                style={styles.groupOptionsButton}
               >
-                <Ionicons color={colors.mutedForeground} name="create-outline" size={18} />
+                <Ionicons color={colors.foreground} name="ellipsis-horizontal" size={19} />
               </Pressable>
               {open
                 ? groupTags.map((tag) => (
@@ -130,6 +131,21 @@ export function AdminTagsScreen() {
           title="Nova tag"
         />
       </ActionModal>
+      <ActionModal
+        onClose={() => setGroupOptions(null)}
+        title={groupOptions?.name ?? 'Opções do grupo'}
+        visible={Boolean(groupOptions)}
+      >
+        <ActionModalItem
+          icon="create-outline"
+          onPress={() => {
+            if (!groupOptions) return;
+            router.push(`/(app)/admin/tags/groups/${groupOptions.id}`);
+            setGroupOptions(null);
+          }}
+          title="Editar grupo"
+        />
+      </ActionModal>
     </View>
   );
 }
@@ -162,7 +178,16 @@ const styles = {
   groupInfo: { gap: 2 },
   groupName: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   groupCount: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  groupEdit: { alignItems: 'center' as const, height: 40, justifyContent: 'center' as const, position: 'absolute' as const, right: 28, top: 9, width: 28 },
+  groupOptionsButton: {
+    alignItems: 'center' as const,
+    backgroundColor: 'transparent',
+    height: 40,
+    justifyContent: 'center' as const,
+    position: 'absolute' as const,
+    right: 28,
+    top: 9,
+    width: 32,
+  },
   tag: { alignItems: 'center' as const, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row' as const, gap: 12, marginLeft: 12, minHeight: 56, paddingLeft: 2 },
   color: { borderRadius: 8, height: 16, width: 16 },
   tagName: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Medium', fontSize: 15 },
