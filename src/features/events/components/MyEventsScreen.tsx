@@ -11,12 +11,23 @@ import { useEventDraftStore } from '@/features/events/event-draft-store';
 import type { Event } from '@/features/events/models/event-types';
 import { colors } from '@/theme/tokens';
 
+type EventCategory = 'all' | 'active' | 'past' | 'inactive' | 'draft';
+
+const eventCategories: { key: EventCategory; label: string }[] = [
+  { key: 'all', label: 'Todos' },
+  { key: 'active', label: 'Ativos agora' },
+  { key: 'past', label: 'Passados' },
+  { key: 'inactive', label: 'Inativos' },
+  { key: 'draft', label: 'Rascunhos' },
+];
+
 export function MyEventsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [optionsEvent, setOptionsEvent] = useState<Event | null>(null);
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory>('all');
   const query = useQuery({
     queryFn: eventApi.getOwned,
     queryKey: ['my-events'],
@@ -30,6 +41,16 @@ export function MyEventsScreen() {
   );
   const pastEvents = events.filter(
     (event) => event.status !== 'draft' && event.active && isPast(event),
+  );
+  const visibleEvents = {
+    active: selectedCategory === 'all' || selectedCategory === 'active' ? activeEvents : [],
+    draft: selectedCategory === 'all' || selectedCategory === 'draft' ? draftEvents : [],
+    inactive: selectedCategory === 'all' || selectedCategory === 'inactive' ? inactiveEvents : [],
+    past: selectedCategory === 'all' || selectedCategory === 'past' ? pastEvents : [],
+  };
+  const visibleEventCount = Object.values(visibleEvents).reduce(
+    (total, categoryEvents) => total + categoryEvents.length,
+    0,
   );
   const remove = useMutation({
     mutationFn: (eventId: string) => eventApi.remove(eventId),
@@ -58,16 +79,40 @@ export function MyEventsScreen() {
           <Text style={styles.title}>Meus Eventos</Text>
         </View>
 
-        <Pressable
-          onPress={() => {
-            useEventDraftStore.getState().clear();
-            router.push('/(app)/events/new');
-          }}
-          style={styles.createButton}
-        >
-          <Ionicons color={colors.primaryForeground} name="calendar-outline" size={16} />
-          <Text style={styles.createButtonLabel}>Novo Evento</Text>
-        </Pressable>
+        <View style={styles.createRow}>
+          <Pressable
+            onPress={() => {
+              useEventDraftStore.getState().clear();
+              router.push('/(app)/events/new');
+            }}
+            style={styles.createButton}
+          >
+            <Ionicons color={colors.primaryForeground} name="calendar-outline" size={16} />
+            <Text style={styles.createButtonLabel}>Novo Evento</Text>
+          </Pressable>
+          <ScrollView
+            contentContainerStyle={styles.filterContent}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScroll}
+          >
+            {eventCategories.map((category) => {
+              const selected = selectedCategory === category.key;
+
+              return (
+                <Pressable
+                  key={category.key}
+                  onPress={() => setSelectedCategory(category.key)}
+                  style={[styles.filterButton, selected && styles.filterButtonActive]}
+                >
+                  <Text style={[styles.filterLabel, selected && styles.filterLabelActive]}>
+                    {category.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
 
         {query.isLoading ? <EventsState text="Carregando eventos..." /> : null}
         {query.isError ? (
@@ -80,28 +125,32 @@ export function MyEventsScreen() {
           <EventsState text="Você ainda não possui eventos cadastrados." />
         ) : null}
 
-        {!query.isLoading && !query.isError && events.length ? (
+        {!query.isLoading && !query.isError && events.length && !visibleEventCount ? (
+          <EventsState text="Nenhum evento nessa categoria." />
+        ) : null}
+
+        {!query.isLoading && !query.isError && events.length && visibleEventCount ? (
           <>
             <EventSection
-              events={activeEvents}
+              events={visibleEvents.active}
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
               onOptionsPress={setOptionsEvent}
               title="Ativos agora"
             />
             <EventSection
-              events={pastEvents}
+              events={visibleEvents.past}
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
               onOptionsPress={setOptionsEvent}
               title="Passados"
             />
             <EventSection
-              events={inactiveEvents}
+              events={visibleEvents.inactive}
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
               onOptionsPress={setOptionsEvent}
               title="Inativos"
             />
             <EventSection
-              events={draftEvents}
+              events={visibleEvents.draft}
               onEventPress={(event) => router.push(`/(app)/events/edit/${event.id}`)}
               onOptionsPress={setOptionsEvent}
               title="Rascunhos"
@@ -315,6 +364,12 @@ const styles = {
     paddingHorizontal: 8,
   },
   title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 18 },
+  createRow: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    gap: 12,
+    width: '100%' as const,
+  },
   createButton: {
     alignItems: 'center' as const,
     backgroundColor: colors.primary,
@@ -331,6 +386,23 @@ const styles = {
     fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
   },
+  filterScroll: { flex: 1, minWidth: 0 },
+  filterContent: { gap: 8 },
+  filterButton: {
+    alignItems: 'center' as const,
+    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 40,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 14,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.foreground,
+    borderColor: colors.foreground,
+  },
+  filterLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 13 },
+  filterLabelActive: { color: colors.primaryForeground },
   section: { gap: 16 },
   sectionTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
   eventList: { gap: 16 },
