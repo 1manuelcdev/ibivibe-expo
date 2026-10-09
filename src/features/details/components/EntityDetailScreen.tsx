@@ -22,21 +22,43 @@ import { colors } from '@/theme/tokens';
 
 type Kind = 'city' | 'event' | 'business';
 
-export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
+export function EntityDetailScreen({
+  id,
+  kind,
+  origin,
+}: {
+  id: string;
+  kind: Kind;
+  origin?: 'home';
+}) {
   const router = useRouter();
   const query = useDetailViewModel(kind, id);
   const { accountId, add, favorites, remove } = useFavoritesViewModel();
   const data = query.data as CityDetail | EventDetail | BusinessDetail | undefined;
 
+  function goBack() {
+    if (kind === 'event' && origin === 'home') {
+      router.replace('/(app)/home');
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
+    } else if (kind === 'event') {
+      router.replace('/(app)/events');
+    } else {
+      router.back();
+    }
+  }
+
   if (query.isLoading)
     return (
-      <DetailShell onBack={() => router.back()}>
+      <DetailShell onBack={goBack}>
         <Loading />
       </DetailShell>
     );
   if (query.isError || !data)
     return (
-      <DetailShell onBack={() => router.back()}>
+      <DetailShell onBack={goBack}>
         <Empty
           icon="alert-circle-outline"
           text={`Erro ao carregar ${kind === 'city' ? 'cidade' : kind === 'event' ? 'evento' : 'empresa'}.`}
@@ -54,8 +76,12 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
       ? ((data as BusinessDetail).media?.[0]?.url ?? (data as BusinessDetail).avatar_url)
       : kind === 'city'
         ? ((data as CityDetail).media?.[0]?.url ?? (data as CityDetail).cover_img_url)
-        : (data as EventDetail).cover_img_url;
-  const tags = (data as CityDetail | EventDetail | BusinessDetail).tags ?? [];
+        : ((data as EventDetail).medias?.find((media) => media.is_cover)?.url ??
+          (data as EventDetail).medias?.[0]?.url ??
+          (data as EventDetail).cover_img_url);
+  const tags = ((data as CityDetail | EventDetail | BusinessDetail).tags ?? []).map((tag) =>
+    typeof tag === 'string' ? tag : tag.name,
+  );
   const favorite = favorites.data?.find((item) =>
     kind === 'city'
       ? item.city_id === id
@@ -94,7 +120,7 @@ export function EntityDetailScreen({ id, kind }: { id: string; kind: Kind }) {
   }
 
   return (
-    <DetailShell onBack={() => router.back()}>
+    <DetailShell onBack={goBack}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Media
           image={image}

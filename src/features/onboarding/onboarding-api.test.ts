@@ -46,6 +46,14 @@ describe('onboarding API', () => {
     expect(mocks.patch).toHaveBeenCalledWith('/accounts/account-1/interests', interests);
   });
 
+  it('loads tags filtered by the target entity type', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await onboardingApi.getTagsByTargetType('event');
+
+    expect(mocks.get).toHaveBeenCalledWith('/tags', { params: { target_type: 'event' } });
+  });
+
   it('submits the business onboarding payload expected by the backend', async () => {
     const input = {
       branch_city_ids: ['branch-city'],

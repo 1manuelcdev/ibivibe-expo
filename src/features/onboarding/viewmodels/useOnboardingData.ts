@@ -7,6 +7,7 @@ export const onboardingQueryKeys = {
   cities: ['onboarding', 'cities'] as const,
   tagGroups: ['onboarding', 'tag-groups'] as const,
   tags: ['onboarding', 'tags'] as const,
+  eventTags: ['onboarding', 'tags', 'event'] as const,
 };
 
 export function useOnboardingInterestsData() {

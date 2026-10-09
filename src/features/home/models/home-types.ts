@@ -1,10 +1,18 @@
+import type { Event } from '@/features/events/models/event-types';
+
 export type HomeEvent = {
+  active?: boolean;
+  cities?: Event['cities'];
   id: string;
   name: string;
   cover_img_url?: string | null;
+  medias?: Event['medias'];
+  reach_level?: Event['reach_level'];
   start_date?: string;
   end_date?: string;
-  tags?: string[];
+  status?: Event['status'];
+  tags?: Event['tags'];
+  type?: Event['type'];
 };
 
 export type HomeBusiness = {

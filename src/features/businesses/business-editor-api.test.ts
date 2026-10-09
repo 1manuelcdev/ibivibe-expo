@@ -32,7 +32,9 @@ describe('business editor API', () => {
 
     expect(mocks.get).toHaveBeenNthCalledWith(1, '/businesses');
     expect(mocks.get).toHaveBeenNthCalledWith(2, '/businesses/business-1/public-profile');
-    expect(mocks.get).toHaveBeenNthCalledWith(3, '/tags');
+    expect(mocks.get).toHaveBeenNthCalledWith(3, '/tags', {
+      params: { target_type: 'business' },
+    });
   });
 
   it('uses the profile, contact and tag endpoints to persist edits', async () => {

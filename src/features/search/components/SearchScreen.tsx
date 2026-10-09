@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { homeApi } from '@/features/home/home-api';
-import { onboardingApi } from '@/features/onboarding/onboarding-api';
+import { useOnboardingTags } from '@/features/onboarding/viewmodels/useOnboardingData';
 import { getSuggestedCategories } from '@/features/search/search-suggestions';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
@@ -29,20 +29,17 @@ export function SearchScreen() {
     queryKey: ['search', 'cities'],
     staleTime: 60_000,
   });
-  const tags = useQuery({
-    queryFn: onboardingApi.getTags,
-    queryKey: ['search', 'tags'],
-    staleTime: 10 * 60_000,
-  });
+  const businessTags = useOnboardingTags('business');
+  const eventTags = useOnboardingTags('event');
   const interests = (account as (typeof account & { interests?: AccountInterests }) | null)
     ?.interests;
   const businessCategories = useMemo(
-    () => getSuggestedCategories('businesses', interests, tags.data),
-    [interests, tags.data],
+    () => getSuggestedCategories('businesses', interests, businessTags.data),
+    [businessTags.data, interests],
   );
   const eventCategories = useMemo(
-    () => getSuggestedCategories('events', interests, tags.data),
-    [interests, tags.data],
+    () => getSuggestedCategories('events', interests, eventTags.data),
+    [eventTags.data, interests],
   );
 
   const heroStyle = useAnimatedStyle(() => ({

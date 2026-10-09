@@ -67,6 +67,7 @@ export function AccountScreen() {
               ['calendar-outline', 'Meus eventos'],
             ]}
             onMyBusiness={() => router.push('/(app)/businesses/manage')}
+            onMyEvents={() => router.push('/(app)/events/manage')}
             onDevelopment={openDevelopment}
           />
         ) : (
@@ -122,6 +123,7 @@ function Section({
   onDevelopment,
   onFavorite,
   onMyBusiness,
+  onMyEvents,
   onSettings,
   title,
 }: {
@@ -129,6 +131,7 @@ function Section({
   onDevelopment: (feature: string) => void;
   onFavorite?: () => void;
   onMyBusiness?: () => void;
+  onMyEvents?: () => void;
   onSettings?: () => void;
   title: string;
 }) {
@@ -146,14 +149,17 @@ function Section({
               ? onFavorite
               : label === 'Meu negócio'
                 ? onMyBusiness
-                : label === 'Configurações do aplicativo'
-                  ? onSettings
-                  : () => onDevelopment(label)
+                : label === 'Meus eventos'
+                  ? onMyEvents
+                  : label === 'Configurações do aplicativo'
+                    ? onSettings
+                    : () => onDevelopment(label)
           }
           style={[
             styles.menuRow,
             label !== 'Favoritos' &&
               label !== 'Meu negócio' &&
+              label !== 'Meus eventos' &&
               label !== 'Configurações do aplicativo' &&
               styles.disabled,
           ]}
@@ -162,6 +168,7 @@ function Section({
             color={
               label !== 'Favoritos' &&
               label !== 'Meu negócio' &&
+              label !== 'Meus eventos' &&
               label !== 'Configurações do aplicativo'
                 ? colors.mutedForeground
                 : colors.foreground
@@ -174,6 +181,7 @@ function Section({
               styles.menuText,
               label !== 'Favoritos' &&
                 label !== 'Meu negócio' &&
+                label !== 'Meus eventos' &&
                 label !== 'Configurações do aplicativo' &&
                 styles.disabledText,
             ]}

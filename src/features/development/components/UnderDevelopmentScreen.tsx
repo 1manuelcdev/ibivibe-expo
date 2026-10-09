@@ -3,27 +3,30 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function UnderDevelopmentScreen() {
   const router = useRouter();
   const { feature } = useLocalSearchParams<{ feature?: string }>();
 
   return (
-    <View style={styles.screen}>
-      <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={styles.back}>
-        <Ionicons color={colors.foreground} name="arrow-back" size={24} />
-      </Pressable>
-      <View style={styles.content}>
-        <View style={styles.icon}>
-          <Ionicons color={colors.primary} name="construct-outline" size={42} />
+    <SafeAreaView>
+      <View style={styles.screen}>
+        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={styles.back}>
+          <Ionicons color={colors.foreground} name="arrow-back" size={24} />
+        </Pressable>
+        <View style={styles.content}>
+          <View style={styles.icon}>
+            <Ionicons color={colors.primary} name="construct-outline" size={42} />
+          </View>
+          <Text style={styles.title}>Em desenvolvimento</Text>
+          <Text style={styles.description}>
+            {feature ? `${feature} está` : 'Esta funcionalidade está'} sendo preparada para uma
+            próxima versão do IbiVibe.
+          </Text>
         </View>
-        <Text style={styles.title}>Em desenvolvimento</Text>
-        <Text style={styles.description}>
-          {feature ? `${feature} está` : 'Esta funcionalidade está'} sendo preparada para uma
-          próxima versão do IbiVibe.
-        </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

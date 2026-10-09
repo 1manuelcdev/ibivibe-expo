@@ -22,10 +22,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { EventCard } from '@/components/EventCard';
+import { TagBadges } from '@/components/TagBadges';
 import { LocationSheet } from '@/features/home/components/LocationSheet';
 import type { HomeCity } from '@/features/home/models/home-types';
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
 import { colors, radius } from '@/theme/tokens';
+import { normalizeImageUrl } from '@/utils/normalize-image-url';
 
 const categories = [
   'Restaurantes',
@@ -41,41 +44,7 @@ const carouselDuration = 7000;
 const fallbackImages = {
   business: 'briefcase-outline' as const,
   city: 'location-outline' as const,
-  event: 'calendar-outline' as const,
 };
-
-const legacyCdnPathPattern = /^\/(cities|businesses|events|users)\//;
-
-function normalizeImageUrl(value?: string | null) {
-  const url = value?.trim();
-
-  if (!url) return null;
-  const normalizedProtocolUrl = url.startsWith('//') ? `https:${url}` : url;
-
-  if (
-    !normalizedProtocolUrl.startsWith('http://') &&
-    !normalizedProtocolUrl.startsWith('https://')
-  ) {
-    return null;
-  }
-
-  try {
-    const parsedUrl = new URL(normalizedProtocolUrl);
-
-    // Compatibilidade com URLs antigas do Flutter/seed. Os arquivos atuais
-    // ficam em /media, enquanto versões antigas apontavam direto para /cities.
-    if (
-      parsedUrl.hostname === 'cdn.ibivibe.com.br' &&
-      legacyCdnPathPattern.test(parsedUrl.pathname)
-    ) {
-      parsedUrl.pathname = `/media${parsedUrl.pathname}`;
-    }
-
-    return parsedUrl.toString();
-  } catch {
-    return null;
-  }
-}
 
 export function HomeScreen() {
   const router = useRouter();
@@ -90,8 +59,8 @@ export function HomeScreen() {
     id: event.id,
     title: event.name,
     date: formatEventDate(event.start_date, event.end_date),
-    tags: event.tags?.slice(0, 3) ?? ['Evento'],
-    image: event.cover_img_url,
+    tags: event.tags?.slice(0, 3).map((tag) => tag.name) ?? ['Evento'],
+    image: event.cover_img_url ?? event.medias?.find((media) => media.is_cover)?.url,
   }));
   const businessItems = businessesQuery.data?.slice(0, 5).map((business) => ({
     id: business.id,
@@ -122,14 +91,19 @@ export function HomeScreen() {
         </Pressable>
         <SponsoredHighlights cities={citiesQuery.data ?? []} />
         <Categories />
-        <Section title="Acontecendo perto de você" onSeeAll={() => router.push('/(app)/events')}>
+        <Section title="Eventos acontecendo perto" onSeeAll={() => router.push('/(app)/events')}>
           <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
-            <HorizontalCards>
+            <HorizontalCards gap={20}>
               {eventItems?.map((event) => (
                 <EventCard
                   key={event.id}
                   {...event}
-                  onPress={() => router.push(`/(app)/events/${event.id}`)}
+                  onPress={() =>
+                    router.push({
+                      params: { id: event.id, origin: 'home' },
+                      pathname: '/(app)/events/[id]',
+                    })
+                  }
                 />
               ))}
             </HorizontalCards>
@@ -364,42 +338,15 @@ function Section({
   );
 }
 
-function HorizontalCards({ children }: { children: React.ReactNode }) {
+function HorizontalCards({ children, gap = 12 }: { children: React.ReactNode; gap?: number }) {
   return (
     <ScrollView
+      contentContainerStyle={[styles.horizontalCards, { gap }]}
       horizontal
-      contentContainerStyle={styles.horizontalCards}
       showsHorizontalScrollIndicator={false}
     >
       {children}
     </ScrollView>
-  );
-}
-
-function EventCard({
-  date,
-  image,
-  onPress,
-  tags,
-  title,
-}: {
-  date: string;
-  image?: string | null;
-  onPress?: () => void;
-  tags: string[];
-  title: string;
-}) {
-  return (
-    <Pressable onPress={onPress} style={styles.horizontalCard}>
-      <RemoteImage icon={fallbackImages.event} source={image} style={styles.thumb} />
-      <View style={styles.cardBody}>
-        <Text numberOfLines={1} style={styles.cardTitle}>
-          {title}
-        </Text>
-        <Text style={styles.cardMeta}>{date}</Text>
-        <EntityTags tags={tags} />
-      </View>
-    </Pressable>
   );
 }
 
@@ -416,11 +363,7 @@ function BusinessCard({
 }) {
   return (
     <Pressable onPress={onPress} style={styles.horizontalCard}>
-      <RemoteImage
-        icon={fallbackImages.business}
-        source={image}
-        style={styles.businessAvatar}
-      />
+      <RemoteImage icon={fallbackImages.business} source={image} style={styles.businessAvatar} />
       <View style={styles.cardBody}>
         <Text numberOfLines={1} style={styles.cardTitle}>
           {title}
@@ -486,25 +429,8 @@ function MediaPlaceholder({
   );
 }
 
-function Badge({ label }: { label: string }) {
-  return (
-    <View style={styles.badge}>
-      <Text style={styles.badgeText}>{label}</Text>
-    </View>
-  );
-}
-
 function EntityTags({ tags }: { tags: string[] }) {
-  const [firstTag, ...remainingTags] = tags;
-
-  return (
-    <View style={styles.badgeRow}>
-      {firstTag ? <Badge label={firstTag} /> : null}
-      {remainingTags.length ? (
-        <Text style={styles.extraTags}>{`(+${remainingTags.length} tags)`}</Text>
-      ) : null}
-    </View>
-  );
+  return <TagBadges tags={tags} />;
 }
 
 function formatEventDate(startDate?: string, endDate?: string) {
@@ -639,7 +565,6 @@ const styles = {
     padding: 8,
     width: 260,
   },
-  thumb: { backgroundColor: '#27272A', borderRadius: 8, height: 80, width: 80 },
   businessAvatar: {
     backgroundColor: '#27272A',
     borderRadius: 999,
@@ -655,23 +580,6 @@ const styles = {
     lineHeight: 18,
   },
   cardMeta: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  badgeRow: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 4,
-    overflow: 'hidden' as const,
-  },
-  badge: {
-    alignSelf: 'flex-start' as const,
-    backgroundColor: '#3F3F46',
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  badgeText: { color: '#E4E4E7', fontFamily: 'DMSans-Medium', fontSize: 10 },
-  extraTags: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 10 },
   cityCard: {
     gap: 6,
     padding: 8,

@@ -22,6 +22,7 @@ import {
   type BusinessContactUpdate,
   type BusinessProfileUpdate,
 } from '@/features/businesses/business-editor-api';
+import { BusinessTagsSheet } from '@/features/businesses/components/BusinessTagsSheet';
 import { invalidateBusinessCaches } from '@/features/businesses/business-cache';
 import {
   cleanupPreparedImage,
@@ -104,6 +105,7 @@ function BusinessEditor({
   const [editor, setEditor] = useState<'profile' | 'description' | 'contact' | 'facilities' | null>(
     null,
   );
+  const [tagsVisible, setTagsVisible] = useState(false);
   const [descriptionStatus, setDescriptionStatus] = useState<SaveStatus>('idle');
   const [contactStatus, setContactStatus] = useState<SaveStatus>('idle');
   const [facilitiesStatus, setFacilitiesStatus] = useState<SaveStatus>('idle');
@@ -266,10 +268,7 @@ function BusinessEditor({
                     <Text style={styles.profileTagCountText}>(+{hiddenProfileTags})</Text>
                   </View>
                 ) : null}
-                <Pressable
-                  onPress={() => router.push('/(app)/businesses/tags')}
-                  style={styles.editPill}
-                >
+                <Pressable onPress={() => setTagsVisible(true)} style={styles.editPill}>
                   <Ionicons color={colors.background} name="pencil" size={14} />
                   <Text style={styles.editPillText}>Editar tags</Text>
                 </Pressable>
@@ -481,6 +480,13 @@ function BusinessEditor({
           />
         )}
       </EditorModal>
+      <BusinessTagsSheet
+        businessId={businessId}
+        onClose={() => setTagsVisible(false)}
+        onSaved={refresh}
+        selectedNames={data.profile.tags ?? []}
+        visible={tagsVisible}
+      />
     </View>
   );
 }

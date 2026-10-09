@@ -22,10 +22,20 @@ export function OverviewScreen({ kind }: { kind: OverviewKind }) {
         ? 'Novos no app'
         : 'Próximos eventos';
 
+  function goBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (kind === 'events') {
+      router.replace('/(app)/home');
+    } else {
+      router.back();
+    }
+  }
+
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={goBack}>
           <Ionicons color={colors.foreground} name="arrow-back" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>{title}</Text>
@@ -107,7 +117,7 @@ function EventRow({ item, onPress }: { item: HomeEvent; onPress: () => void }) {
       kind="event"
       meta={formatDate(item.start_date, item.end_date)}
       onPress={onPress}
-      tags={item.tags}
+      tags={item.tags?.map((tag) => tag.name)}
       title={item.name}
     />
   );
