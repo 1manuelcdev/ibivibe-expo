@@ -39,9 +39,34 @@ export type AdminOverview = {
   reviews: number;
 };
 
+export type AdminTag = {
+  color?: string | null;
+  description?: string | null;
+  group?: { id: string; name: string } | null;
+  group_id: string;
+  id: string;
+  name: string;
+  position?: number;
+  slug: string;
+};
+
+export type AdminTagUpdate = Pick<AdminTag, 'color' | 'description' | 'name' | 'position'>;
+
 export const adminApi = {
   async getOverview() {
     return (await apiClient.get<AdminOverview>('/admin/overview')).data;
+  },
+
+  async getTags() {
+    return (await apiClient.get<AdminTag[]>('/admin/resources/tags')).data;
+  },
+
+  async updateTag(tagId: string, payload: Partial<AdminTagUpdate>) {
+    return (await apiClient.patch<AdminTag>(`/admin/resources/tags/${tagId}`, payload)).data;
+  },
+
+  async deleteTag(tagId: string) {
+    return (await apiClient.delete(`/admin/resources/tags/${tagId}`)).data;
   },
 
   async getCities() {

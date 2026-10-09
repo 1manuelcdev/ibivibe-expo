@@ -80,6 +80,19 @@ export function AdminPanelScreen() {
             </View>
             <Ionicons color={colors.mutedForeground} name="chevron-forward" size={20} />
           </Pressable>
+          <Pressable
+            accessibilityHint="Abre a gestão de tags"
+            accessibilityRole="button"
+            onPress={() => router.push('/(app)/admin/tags')}
+            style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+          >
+            <Ionicons color={colors.foreground} name="pricetags-outline" size={22} />
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Editar tags</Text>
+              <Text style={styles.actionDescription}>Nome, descrição, cor e ordem.</Text>
+            </View>
+            <Ionicons color={colors.mutedForeground} name="chevron-forward" size={20} />
+          </Pressable>
         </View>
       </ScrollView>
     </View>

@@ -42,6 +42,23 @@ describe('admin API', () => {
     });
   });
 
+  it('uses the administrative tag endpoints', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+    mocks.patch.mockResolvedValue({ data: {} });
+    mocks.delete.mockResolvedValue({ data: {} });
+
+    await adminApi.getTags();
+    await adminApi.updateTag('tag-1', { color: '#9FFF8B', name: 'Turismo rural' });
+    await adminApi.deleteTag('tag-1');
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/resources/tags');
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/resources/tags/tag-1', {
+      color: '#9FFF8B',
+      name: 'Turismo rural',
+    });
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/resources/tags/tag-1');
+  });
+
   it('uses the city media endpoints for upload, cover, ordering and deletion', async () => {
     mocks.get.mockResolvedValue({ data: [] });
     mocks.post.mockResolvedValue({ data: {} });
