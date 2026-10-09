@@ -25,6 +25,7 @@ describe('admin API', () => {
 
   it('uses the protected city endpoints for data and tags', async () => {
     mocks.get.mockResolvedValue({ data: [] });
+    mocks.post.mockResolvedValue({ data: {} });
     mocks.patch.mockResolvedValue({ data: {} });
     mocks.put.mockResolvedValue({ data: {} });
 
@@ -48,15 +49,33 @@ describe('admin API', () => {
     mocks.delete.mockResolvedValue({ data: {} });
 
     await adminApi.getTags();
+    await adminApi.getTag('tag-1');
+    await adminApi.getTagGroups();
+    await adminApi.createTag({ group_id: 'group-1', name: 'Turismo rural', target_types: ['city'] });
     await adminApi.updateTag('tag-1', { color: '#9FFF8B', name: 'Turismo rural' });
     await adminApi.deleteTag('tag-1');
+    await adminApi.createTagGroup({ name: 'Turismo' });
+    await adminApi.updateTagGroup('group-1', { name: 'Natureza' });
+    await adminApi.deleteTagGroup('group-1');
 
     expect(mocks.get).toHaveBeenCalledWith('/admin/resources/tags');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/resources/tags/tag-1');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/resources/tag-groups');
+    expect(mocks.post).toHaveBeenCalledWith('/admin/resources/tags', {
+      group_id: 'group-1',
+      name: 'Turismo rural',
+      target_types: ['city'],
+    });
     expect(mocks.patch).toHaveBeenCalledWith('/admin/resources/tags/tag-1', {
       color: '#9FFF8B',
       name: 'Turismo rural',
     });
     expect(mocks.delete).toHaveBeenCalledWith('/admin/resources/tags/tag-1');
+    expect(mocks.post).toHaveBeenCalledWith('/admin/resources/tag-groups', { name: 'Turismo' });
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/resources/tag-groups/group-1', {
+      name: 'Natureza',
+    });
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/resources/tag-groups/group-1');
   });
 
   it('uses the city media endpoints for upload, cover, ordering and deletion', async () => {

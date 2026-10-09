@@ -40,13 +40,25 @@ export type AdminOverview = {
 };
 
 export type AdminTagGroup = {
+  created_at?: string;
   description?: string | null;
   id: string;
   name: string;
+  tags?: AdminTag[];
+  updated_at?: string;
+};
+
+export type TagTargetType = 'business' | 'city' | 'event';
+
+export type AdminTagTarget = {
+  id: string;
+  tag_id: string;
+  target_type: TagTargetType;
 };
 
 export type AdminTag = {
   color?: string | null;
+  created_at?: string;
   description?: string | null;
   group?: AdminTagGroup | null;
   group_id: string;
@@ -54,9 +66,15 @@ export type AdminTag = {
   name: string;
   position?: number;
   slug: string;
+  targets?: AdminTagTarget[];
+  updated_at?: string;
 };
 
-export type AdminTagUpdate = Pick<AdminTag, 'color' | 'description' | 'name' | 'position'>;
+export type AdminTagGroupInput = Pick<AdminTagGroup, 'description' | 'name'>;
+
+export type AdminTagInput = Pick<AdminTag, 'color' | 'description' | 'group_id' | 'name' | 'position'> & {
+  target_types?: TagTargetType[];
+};
 
 export const adminApi = {
   async getOverview() {
@@ -67,12 +85,38 @@ export const adminApi = {
     return (await apiClient.get<AdminTag[]>('/admin/resources/tags')).data;
   },
 
-  async updateTag(tagId: string, payload: Partial<AdminTagUpdate>) {
+  async getTag(tagId: string) {
+    return (await apiClient.get<AdminTag>(`/admin/resources/tags/${tagId}`)).data;
+  },
+
+  async getTagGroups() {
+    return (await apiClient.get<AdminTagGroup[]>('/admin/resources/tag-groups')).data;
+  },
+
+  async createTag(payload: AdminTagInput) {
+    return (await apiClient.post<AdminTag>('/admin/resources/tags', payload)).data;
+  },
+
+  async updateTag(tagId: string, payload: Partial<AdminTagInput>) {
     return (await apiClient.patch<AdminTag>(`/admin/resources/tags/${tagId}`, payload)).data;
   },
 
   async deleteTag(tagId: string) {
     return (await apiClient.delete(`/admin/resources/tags/${tagId}`)).data;
+  },
+
+  async createTagGroup(payload: AdminTagGroupInput) {
+    return (await apiClient.post<AdminTagGroup>('/admin/resources/tag-groups', payload)).data;
+  },
+
+  async updateTagGroup(groupId: string, payload: Partial<AdminTagGroupInput>) {
+    return (
+      await apiClient.patch<AdminTagGroup>(`/admin/resources/tag-groups/${groupId}`, payload)
+    ).data;
+  },
+
+  async deleteTagGroup(groupId: string) {
+    return (await apiClient.delete(`/admin/resources/tag-groups/${groupId}`)).data;
   },
 
   async getCities() {
