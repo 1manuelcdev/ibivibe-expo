@@ -41,6 +41,7 @@ const categories = [
 ];
 
 const carouselDuration = 7000;
+const refreshSkeletonDelay = 350;
 
 const fallbackImages = {
   business: 'briefcase-outline' as const,
@@ -81,6 +82,7 @@ export function HomeScreen() {
     setRefreshing(true);
     try {
       await Promise.all([businessesQuery.refetch(), citiesQuery.refetch(), eventsQuery.refetch()]);
+      await new Promise((resolve) => setTimeout(resolve, refreshSkeletonDelay));
     } finally {
       setRefreshing(false);
     }
@@ -112,10 +114,10 @@ export function HomeScreen() {
           <Ionicons color={colors.mutedForeground} name="search-outline" size={20} />
           <Text style={styles.searchText}>O que vamos fazer hoje na Ibiapaba?</Text>
         </Pressable>
-        {citiesQuery.isLoading ? <HomeBannerSkeleton /> : <SponsoredHighlights cities={citiesQuery.data ?? []} />}
+        {citiesQuery.isLoading || refreshing ? <HomeBannerSkeleton /> : <SponsoredHighlights cities={citiesQuery.data ?? []} />}
         <Categories />
         <Section title="Eventos acontecendo perto" onSeeAll={() => router.push('/(app)/events')}>
-          <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={eventsQuery} emptyText="Nenhum evento disponível agora.">
             <HorizontalCards gap={20}>
               {eventItems?.map((event) => (
                 <EventCard
@@ -136,7 +138,7 @@ export function HomeScreen() {
           title="Explore as empresas da Ibiapaba"
           onSeeAll={() => router.push('/(app)/businesses')}
         >
-          <HomeSectionState query={businessesQuery} emptyText="Nenhuma empresa disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={businessesQuery} emptyText="Nenhuma empresa disponível agora.">
             <HorizontalCards>
               {businessItems?.map((business) => (
                 <BusinessCard
@@ -152,7 +154,7 @@ export function HomeScreen() {
           title="Explore as cidades da Ibiapaba"
           onSeeAll={() => router.push('/(app)/cities')}
         >
-          <HomeSectionState query={citiesQuery} emptyText="Nenhuma cidade disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={citiesQuery} emptyText="Nenhuma cidade disponível agora.">
             <HorizontalCards>
               {cityItems?.map((city) => (
                 <CityCard
@@ -303,13 +305,15 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
 function HomeSectionState({
   children,
   emptyText,
+  forceSkeleton = false,
   query,
 }: {
   children: React.ReactNode;
   emptyText: string;
+  forceSkeleton?: boolean;
   query: { isError: boolean; isLoading: boolean; refetch: () => void };
 }) {
-  if (query.isLoading) return <HomeCardsSkeleton />;
+  if (query.isLoading || forceSkeleton) return <HomeCardsSkeleton />;
   if (query.isError) {
     return (
       <Pressable onPress={query.refetch} style={styles.sectionState}>
