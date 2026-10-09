@@ -39,10 +39,16 @@ export type AdminOverview = {
   reviews: number;
 };
 
+export type AdminTagGroup = {
+  description?: string | null;
+  id: string;
+  name: string;
+};
+
 export type AdminTag = {
   color?: string | null;
   description?: string | null;
-  group?: { id: string; name: string } | null;
+  group?: AdminTagGroup | null;
   group_id: string;
   id: string;
   name: string;
