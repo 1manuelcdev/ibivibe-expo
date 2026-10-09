@@ -62,6 +62,7 @@ function AppNavbar(_props: object) {
         const selected = activeIndex === index;
         return (
           <Pressable
+            disabled={selected}
             key={item.label}
             onPress={() => router.push(item.route as never)}
             style={styles.navItem}

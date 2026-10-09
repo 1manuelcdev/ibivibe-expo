@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, ReactNode } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { Modal, Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
@@ -47,6 +48,7 @@ export function ActionModalItem({
   disabled = false,
   icon,
   onPress,
+  style,
   title,
 }: {
   description?: string;
@@ -54,6 +56,7 @@ export function ActionModalItem({
   disabled?: boolean;
   icon: IconName;
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
   title: string;
 }) {
   const iconColor = destructive ? '#FCA5A5' : colors.foreground;
@@ -62,7 +65,7 @@ export function ActionModalItem({
     <Pressable
       disabled={disabled}
       onPress={onPress}
-      style={[styles.action, destructive && styles.destructiveAction, disabled && styles.disabled]}
+      style={[styles.action, destructive && styles.destructiveAction, disabled && styles.disabled, style]}
     >
       <View style={styles.icon}>
         <Ionicons color={iconColor} name={icon} size={19} />

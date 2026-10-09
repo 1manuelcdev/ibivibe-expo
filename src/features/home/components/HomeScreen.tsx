@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type ImageStyle,
   Pressable,
+  RefreshControl,
   ScrollView,
   type StyleProp,
   Text,
@@ -41,6 +41,7 @@ const categories = [
 ];
 
 const carouselDuration = 7000;
+const refreshSkeletonDelay = 350;
 
 const fallbackImages = {
   business: 'briefcase-outline' as const,
@@ -50,6 +51,7 @@ const fallbackImages = {
 export function HomeScreen() {
   const router = useRouter();
   const [locationSheetVisible, setLocationSheetVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCity, setSelectedCity] = useState<HomeCity | null>(null);
   const {
     businesses: businessesQuery,
@@ -76,10 +78,31 @@ export function HomeScreen() {
     tags: city.tags?.slice(0, 2) ?? ['Ibiapaba'],
     image: cityCoverUrls.get(city.id),
   }));
+  const refreshHome = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([businessesQuery.refetch(), citiesQuery.refetch(), eventsQuery.refetch()]);
+      await new Promise((resolve) => setTimeout(resolve, refreshSkeletonDelay));
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            colors={[colors.primary]}
+            onRefresh={() => void refreshHome()}
+            progressBackgroundColor="#18181B"
+            refreshing={refreshing}
+            tintColor={colors.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
         <HomeHeader
           city={selectedCity?.name ?? 'Toda a Ibiapaba'}
           onLocationPress={() => setLocationSheetVisible(true)}
@@ -91,10 +114,10 @@ export function HomeScreen() {
           <Ionicons color={colors.mutedForeground} name="search-outline" size={20} />
           <Text style={styles.searchText}>O que vamos fazer hoje na Ibiapaba?</Text>
         </Pressable>
-        <SponsoredHighlights cities={citiesQuery.data ?? []} />
+        {citiesQuery.isLoading || refreshing ? <HomeBannerSkeleton /> : <SponsoredHighlights cities={citiesQuery.data ?? []} />}
         <Categories />
         <Section title="Eventos acontecendo perto" onSeeAll={() => router.push('/(app)/events')}>
-          <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={eventsQuery} emptyText="Nenhum evento disponível agora." skeletonVariant="event">
             <HorizontalCards gap={20}>
               {eventItems?.map((event) => (
                 <EventCard
@@ -115,7 +138,7 @@ export function HomeScreen() {
           title="Explore as empresas da Ibiapaba"
           onSeeAll={() => router.push('/(app)/businesses')}
         >
-          <HomeSectionState query={businessesQuery} emptyText="Nenhuma empresa disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={businessesQuery} emptyText="Nenhuma empresa disponível agora." skeletonVariant="business">
             <HorizontalCards>
               {businessItems?.map((business) => (
                 <BusinessCard
@@ -131,7 +154,7 @@ export function HomeScreen() {
           title="Explore as cidades da Ibiapaba"
           onSeeAll={() => router.push('/(app)/cities')}
         >
-          <HomeSectionState query={citiesQuery} emptyText="Nenhuma cidade disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={citiesQuery} emptyText="Nenhuma cidade disponível agora." skeletonVariant="city">
             <HorizontalCards>
               {cityItems?.map((city) => (
                 <CityCard
@@ -282,14 +305,17 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
 function HomeSectionState({
   children,
   emptyText,
+  forceSkeleton = false,
   query,
+  skeletonVariant,
 }: {
   children: React.ReactNode;
   emptyText: string;
+  forceSkeleton?: boolean;
   query: { isError: boolean; isLoading: boolean; refetch: () => void };
+  skeletonVariant: 'business' | 'city' | 'event';
 }) {
-  if (query.isLoading)
-    return <ActivityIndicator color={colors.primary} style={styles.sectionState} />;
+  if (query.isLoading || forceSkeleton) return <HomeCardsSkeleton variant={skeletonVariant} />;
   if (query.isError) {
     return (
       <Pressable onPress={query.refetch} style={styles.sectionState}>
@@ -301,6 +327,26 @@ function HomeSectionState({
   }
   if (!children) return <Text style={styles.sectionStateText}>{emptyText}</Text>;
   return <>{children}</>;
+}
+
+function HomeBannerSkeleton() {
+  return <View style={[styles.skeleton, styles.bannerSkeleton]} />;
+}
+
+function HomeCardsSkeleton({ variant }: { variant: 'business' | 'city' | 'event' }) {
+  return (
+    <View style={[styles.skeletonCards, variant === 'event' && styles.eventSkeletonCards]}>
+      {Array.from({ length: 3 }, (_, index) => (
+        <View key={index} style={styles[`${variant}SkeletonCard`]}>
+          <View style={[styles.skeleton, styles[`${variant}SkeletonImage`]]} />
+          <View style={[styles.skeletonCardContent, variant === 'business' && styles.businessSkeletonContent]}>
+            <View style={[styles.skeleton, styles[`${variant}SkeletonTitle`]]} />
+            <View style={[styles.skeleton, styles[`${variant}SkeletonMeta`]]} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 function Categories() {
@@ -564,6 +610,24 @@ const styles = {
   horizontalCards: { gap: 12 },
   sectionState: { alignSelf: 'flex-start' as const, paddingVertical: 12 },
   sectionStateText: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  skeleton: { backgroundColor: '#27272A', borderRadius: 12 },
+  bannerSkeleton: { height: 226, width: '100%' as const },
+  skeletonCards: { flexDirection: 'row' as const, gap: 12, overflow: 'hidden' as const },
+  eventSkeletonCards: { gap: 20 },
+  skeletonCardContent: { gap: 7, minWidth: 0 },
+  eventSkeletonCard: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, width: 218 },
+  eventSkeletonImage: { borderRadius: 8, height: 80, width: 80 },
+  eventSkeletonTitle: { height: 16, width: '84%' as const },
+  eventSkeletonMeta: { height: 14, width: '58%' as const },
+  businessSkeletonCard: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, padding: 8, width: 260 },
+  businessSkeletonImage: { borderRadius: 999, height: 80, width: 80 },
+  businessSkeletonContent: { flex: 1, justifyContent: 'center' as const },
+  businessSkeletonTitle: { height: 14, width: '78%' as const },
+  businessSkeletonMeta: { height: 20, width: '62%' as const },
+  citySkeletonCard: { gap: 6, padding: 8, width: 212 },
+  citySkeletonImage: { borderRadius: 8, height: 100, width: 196 },
+  citySkeletonTitle: { height: 14, width: '70%' as const },
+  citySkeletonMeta: { height: 20, width: '58%' as const },
   horizontalCard: {
     borderRadius: 12,
     flexDirection: 'row' as const,

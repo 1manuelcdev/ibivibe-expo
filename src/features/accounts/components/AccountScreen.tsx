@@ -4,6 +4,7 @@ import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import { AccountSwitcherSheet } from '@/features/accounts/components/AccountSwitcherSheet';
+import { isAdminAccount } from '@/features/admin/admin-access';
 import { useOwnedBusiness } from '@/features/businesses/use-owned-business';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
@@ -14,6 +15,14 @@ export function AccountScreen() {
   const logout = useSessionStore((state) => state.logout);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const isBusiness = account?.type === 'business';
+  const isAdmin = isAdminAccount(account);
+  const youItems: [keyof typeof Ionicons.glyphMap, string][] = [
+    ['person-outline', 'Meu perfil'],
+    ['heart-outline', 'Favoritos'],
+    ...(isAdmin
+      ? [['shield-checkmark-outline', 'Painel do Administrador'] as [keyof typeof Ionicons.glyphMap, string]]
+      : []),
+  ];
   const ownedBusiness = useOwnedBusiness();
 
   if (!account)
@@ -73,10 +82,8 @@ export function AccountScreen() {
         ) : (
           <Section
             title="Você"
-            items={[
-              ['person-outline', 'Meu perfil'],
-              ['heart-outline', 'Favoritos'],
-            ]}
+            items={youItems}
+            onAdminPanel={() => router.push('/(app)/admin')}
             onFavorite={() => router.push('/(app)/favorites')}
             onDevelopment={openDevelopment}
           />
@@ -121,6 +128,7 @@ export function AccountScreen() {
 function Section({
   items,
   onDevelopment,
+  onAdminPanel,
   onFavorite,
   onMyBusiness,
   onMyEvents,
@@ -129,6 +137,7 @@ function Section({
 }: {
   items: [keyof typeof Ionicons.glyphMap, string][];
   onDevelopment: (feature: string) => void;
+  onAdminPanel?: () => void;
   onFavorite?: () => void;
   onMyBusiness?: () => void;
   onMyEvents?: () => void;
@@ -151,15 +160,18 @@ function Section({
                 ? onMyBusiness
                 : label === 'Meus eventos'
                   ? onMyEvents
-                  : label === 'Configurações do aplicativo'
-                    ? onSettings
-                    : () => onDevelopment(label)
+                  : label === 'Painel do Administrador'
+                    ? onAdminPanel
+                    : label === 'Configurações do aplicativo'
+                      ? onSettings
+                      : () => onDevelopment(label)
           }
           style={[
             styles.menuRow,
             label !== 'Favoritos' &&
               label !== 'Meu negócio' &&
               label !== 'Meus eventos' &&
+              label !== 'Painel do Administrador' &&
               label !== 'Configurações do aplicativo' &&
               styles.disabled,
           ]}
@@ -169,6 +181,7 @@ function Section({
               label !== 'Favoritos' &&
               label !== 'Meu negócio' &&
               label !== 'Meus eventos' &&
+              label !== 'Painel do Administrador' &&
               label !== 'Configurações do aplicativo'
                 ? colors.mutedForeground
                 : colors.foreground
@@ -182,6 +195,7 @@ function Section({
               label !== 'Favoritos' &&
                 label !== 'Meu negócio' &&
                 label !== 'Meus eventos' &&
+                label !== 'Painel do Administrador' &&
                 label !== 'Configurações do aplicativo' &&
                 styles.disabledText,
             ]}
