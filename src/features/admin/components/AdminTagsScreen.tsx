@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
 import { AppBackButton } from '@/components/AppBackButton';
 import { TextField } from '@/components/TextField';
@@ -15,7 +16,9 @@ import { colors } from '@/theme/tokens';
 export function AdminTagsScreen() {
   const account = useSessionStore((state) => state.account);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [createVisible, setCreateVisible] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState<AdminTagGroup | null>(null);
   const [groupOptions, setGroupOptions] = useState<AdminTagGroup | null>(null);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [search, setSearch] = useState('');
@@ -30,6 +33,14 @@ export function AdminTagsScreen() {
     });
   }, [groupsQuery.data, search]);
   const hasSearch = Boolean(search.trim());
+  const removeGroup = useMutation({
+    mutationFn: (groupId: string) => adminApi.deleteTagGroup(groupId),
+    onError: (error) => Alert.alert('Não foi possível excluir o grupo', getApiErrorMessage(error)),
+    onSuccess: async () => {
+      setGroupToDelete(null);
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'tag-groups'] });
+    },
+  });
   const toggleGroup = (groupId: string) =>
     setOpenGroups((current) =>
       current.includes(groupId)
@@ -146,6 +157,29 @@ export function AdminTagsScreen() {
             setGroupOptions(null);
           }}
           title="Editar grupo"
+        />
+        <ActionModalItem
+          destructive
+          icon="trash-outline"
+          onPress={() => {
+            setGroupToDelete(groupOptions);
+            setGroupOptions(null);
+          }}
+          title="Excluir grupo"
+        />
+      </ActionModal>
+      <ActionModal
+        description="As tags deste grupo também serão removidas."
+        onClose={() => setGroupToDelete(null)}
+        title="Excluir grupo?"
+        visible={Boolean(groupToDelete)}
+      >
+        <ActionModalItem
+          destructive
+          disabled={removeGroup.isPending}
+          icon="trash-outline"
+          onPress={() => groupToDelete && removeGroup.mutate(groupToDelete.id)}
+          title={removeGroup.isPending ? 'Excluindo…' : 'Excluir grupo'}
         />
       </ActionModal>
     </View>
