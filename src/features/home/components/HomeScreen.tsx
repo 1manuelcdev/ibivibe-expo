@@ -117,7 +117,7 @@ export function HomeScreen() {
         {citiesQuery.isLoading || refreshing ? <HomeBannerSkeleton /> : <SponsoredHighlights cities={citiesQuery.data ?? []} />}
         <Categories />
         <Section title="Eventos acontecendo perto" onSeeAll={() => router.push('/(app)/events')}>
-          <HomeSectionState forceSkeleton={refreshing} query={eventsQuery} emptyText="Nenhum evento disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={eventsQuery} emptyText="Nenhum evento disponível agora." skeletonVariant="event">
             <HorizontalCards gap={20}>
               {eventItems?.map((event) => (
                 <EventCard
@@ -138,7 +138,7 @@ export function HomeScreen() {
           title="Explore as empresas da Ibiapaba"
           onSeeAll={() => router.push('/(app)/businesses')}
         >
-          <HomeSectionState forceSkeleton={refreshing} query={businessesQuery} emptyText="Nenhuma empresa disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={businessesQuery} emptyText="Nenhuma empresa disponível agora." skeletonVariant="business">
             <HorizontalCards>
               {businessItems?.map((business) => (
                 <BusinessCard
@@ -154,7 +154,7 @@ export function HomeScreen() {
           title="Explore as cidades da Ibiapaba"
           onSeeAll={() => router.push('/(app)/cities')}
         >
-          <HomeSectionState forceSkeleton={refreshing} query={citiesQuery} emptyText="Nenhuma cidade disponível agora.">
+          <HomeSectionState forceSkeleton={refreshing} query={citiesQuery} emptyText="Nenhuma cidade disponível agora." skeletonVariant="city">
             <HorizontalCards>
               {cityItems?.map((city) => (
                 <CityCard
@@ -307,13 +307,15 @@ function HomeSectionState({
   emptyText,
   forceSkeleton = false,
   query,
+  skeletonVariant,
 }: {
   children: React.ReactNode;
   emptyText: string;
   forceSkeleton?: boolean;
   query: { isError: boolean; isLoading: boolean; refetch: () => void };
+  skeletonVariant: 'business' | 'city' | 'event';
 }) {
-  if (query.isLoading || forceSkeleton) return <HomeCardsSkeleton />;
+  if (query.isLoading || forceSkeleton) return <HomeCardsSkeleton variant={skeletonVariant} />;
   if (query.isError) {
     return (
       <Pressable onPress={query.refetch} style={styles.sectionState}>
@@ -331,15 +333,15 @@ function HomeBannerSkeleton() {
   return <View style={[styles.skeleton, styles.bannerSkeleton]} />;
 }
 
-function HomeCardsSkeleton() {
+function HomeCardsSkeleton({ variant }: { variant: 'business' | 'city' | 'event' }) {
   return (
-    <View style={styles.skeletonCards}>
+    <View style={[styles.skeletonCards, variant === 'event' && styles.eventSkeletonCards]}>
       {Array.from({ length: 3 }, (_, index) => (
-        <View key={index} style={styles.skeletonCard}>
-          <View style={[styles.skeleton, styles.skeletonImage]} />
-          <View style={styles.skeletonCardContent}>
-            <View style={[styles.skeleton, styles.skeletonTitle]} />
-            <View style={[styles.skeleton, styles.skeletonMeta]} />
+        <View key={index} style={styles[`${variant}SkeletonCard`]}>
+          <View style={[styles.skeleton, styles[`${variant}SkeletonImage`]]} />
+          <View style={[styles.skeletonCardContent, variant === 'business' && styles.businessSkeletonContent]}>
+            <View style={[styles.skeleton, styles[`${variant}SkeletonTitle`]]} />
+            <View style={[styles.skeleton, styles[`${variant}SkeletonMeta`]]} />
           </View>
         </View>
       ))}
@@ -611,11 +613,21 @@ const styles = {
   skeleton: { backgroundColor: '#27272A', borderRadius: 12 },
   bannerSkeleton: { height: 226, width: '100%' as const },
   skeletonCards: { flexDirection: 'row' as const, gap: 12, overflow: 'hidden' as const },
-  skeletonCard: { backgroundColor: '#18181B', borderRadius: 12, gap: 10, padding: 8, width: 212 },
-  skeletonImage: { height: 100, width: '100%' as const },
-  skeletonCardContent: { gap: 7, paddingBottom: 2 },
-  skeletonTitle: { height: 14, width: '72%' as const },
-  skeletonMeta: { height: 10, width: '48%' as const },
+  eventSkeletonCards: { gap: 20 },
+  skeletonCardContent: { gap: 7, minWidth: 0 },
+  eventSkeletonCard: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, width: 218 },
+  eventSkeletonImage: { borderRadius: 8, height: 80, width: 80 },
+  eventSkeletonTitle: { height: 16, width: '84%' as const },
+  eventSkeletonMeta: { height: 14, width: '58%' as const },
+  businessSkeletonCard: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, padding: 8, width: 260 },
+  businessSkeletonImage: { borderRadius: 999, height: 80, width: 80 },
+  businessSkeletonContent: { flex: 1, justifyContent: 'center' as const },
+  businessSkeletonTitle: { height: 14, width: '78%' as const },
+  businessSkeletonMeta: { height: 20, width: '62%' as const },
+  citySkeletonCard: { gap: 6, padding: 8, width: 212 },
+  citySkeletonImage: { borderRadius: 8, height: 100, width: 196 },
+  citySkeletonTitle: { height: 14, width: '70%' as const },
+  citySkeletonMeta: { height: 20, width: '58%' as const },
   horizontalCard: {
     borderRadius: 12,
     flexDirection: 'row' as const,

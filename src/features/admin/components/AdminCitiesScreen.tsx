@@ -7,7 +7,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AppBackButton } from '@/components/AppBackButton';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi } from '@/features/admin/admin-api';
-import { AdminListSkeleton } from '@/features/admin/components/AdminSkeleton';
+import { AdminCitiesSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 import { TextField } from '@/components/TextField';
@@ -35,7 +35,7 @@ export function AdminCitiesScreen() {
           <Text style={styles.title}>Editar cidades</Text>
         </View>
         <TextField onChangeText={setSearch} placeholder="Buscar cidade" value={search} />
-        {cities.isLoading ? <AdminListSkeleton /> : null}
+        {cities.isLoading ? <AdminCitiesSkeleton /> : null}
         {cities.isError ? (
           <State text="Não foi possível carregar as cidades." onPress={() => cities.refetch()} />
         ) : null}

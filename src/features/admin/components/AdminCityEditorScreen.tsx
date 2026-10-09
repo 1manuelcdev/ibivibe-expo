@@ -30,7 +30,7 @@ export function AdminCityEditorScreen() {
   const city = cities.data?.find((item) => item.id === cityId);
 
   if (!isAdminAccount(account)) return null;
-  if (cities.isLoading) return <AdminEditorSkeleton />;
+  if (cities.isLoading) return <AdminEditorSkeleton variant="city" />;
   if (cities.isError || !city) return <EditorState error onRetry={() => cities.refetch()} />;
 
   return <CityEditorForm city={city} key={city.id} />;

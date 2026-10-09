@@ -20,7 +20,7 @@ export function AdminTagGroupEditorScreen({ create = false }: { create?: boolean
   const groups = useQuery({ queryFn: adminApi.getTagGroups, queryKey: ['admin', 'tag-groups'] });
   const group = groups.data?.find((item) => item.id === groupId);
   if (!isAdminAccount(account)) return null;
-  if (groups.isLoading) return <AdminEditorSkeleton />;
+  if (groups.isLoading) return <AdminEditorSkeleton variant="group" />;
   if (groups.isError || (!create && !group)) return <State error onRetry={() => groups.refetch()} />;
   return <GroupForm create={create} group={group} key={group?.id ?? 'new'} />;
 }

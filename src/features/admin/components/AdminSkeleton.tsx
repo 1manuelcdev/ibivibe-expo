@@ -7,7 +7,7 @@ export function AdminSkeleton({ style }: { style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.base, style]} />;
 }
 
-export function AdminListSkeleton({ rows = 5 }: { rows?: number }) {
+export function AdminCitiesSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <View style={styles.list}>
       {Array.from({ length: rows }, (_, index) => (
@@ -15,11 +15,45 @@ export function AdminListSkeleton({ rows = 5 }: { rows?: number }) {
           <AdminSkeleton style={styles.listIcon} />
           <View style={styles.listContent}>
             <AdminSkeleton style={styles.listTitle} />
-            <AdminSkeleton style={styles.listSubtitle} />
           </View>
           <AdminSkeleton style={styles.chevron} />
         </View>
       ))}
+    </View>
+  );
+}
+
+export function AdminTagsSkeleton() {
+  return (
+    <View style={styles.tagsList}>
+      {Array.from({ length: 3 }, (_, index) => (
+        <View key={index} style={styles.tagGroup}>
+          <View style={styles.tagGroupHeader}>
+            <View style={styles.listContent}>
+              <AdminSkeleton style={styles.listTitle} />
+              <AdminSkeleton style={styles.listSubtitle} />
+            </View>
+            <AdminSkeleton style={styles.groupAction} />
+            <AdminSkeleton style={styles.chevron} />
+          </View>
+          {index === 0 ? (
+            <View style={styles.tagRows}>
+              <TagRowSkeleton />
+              <TagRowSkeleton />
+            </View>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function TagRowSkeleton() {
+  return (
+    <View style={styles.tagRow}>
+      <AdminSkeleton style={styles.tagColor} />
+      <AdminSkeleton style={styles.tagTitle} />
+      <AdminSkeleton style={styles.chevron} />
     </View>
   );
 }
@@ -38,7 +72,7 @@ export function AdminMetricsSkeleton() {
   );
 }
 
-export function AdminEditorSkeleton() {
+export function AdminEditorSkeleton({ variant = 'city' }: { variant?: 'city' | 'group' | 'tag' }) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.editorContent} showsVerticalScrollIndicator={false}>
@@ -46,16 +80,53 @@ export function AdminEditorSkeleton() {
           <AdminSkeleton style={styles.back} />
           <AdminSkeleton style={styles.editorTitle} />
         </View>
-        <AdminSkeleton style={styles.field} />
-        <AdminSkeleton style={styles.field} />
-        <AdminSkeleton style={styles.textarea} />
-        <AdminSkeleton style={styles.field} />
-        <AdminSkeleton style={styles.field} />
+        {variant === 'city' ? <CityEditorFields /> : null}
+        {variant === 'tag' ? <TagEditorFields /> : null}
+        {variant === 'group' ? <GroupEditorFields /> : null}
       </ScrollView>
       <View style={styles.editorFooter}>
         <AdminSkeleton style={styles.button} />
       </View>
     </View>
+  );
+}
+
+function CityEditorFields() {
+  return (
+    <>
+      <AdminSkeleton style={styles.field} />
+      <AdminSkeleton style={styles.field} />
+      <AdminSkeleton style={styles.textarea} />
+      <AdminSkeleton style={styles.coordinates} />
+      <AdminSkeleton style={styles.section} />
+      <AdminSkeleton style={styles.section} />
+    </>
+  );
+}
+
+function TagEditorFields() {
+  return (
+    <>
+      <AdminSkeleton style={styles.field} />
+      <AdminSkeleton style={styles.groupPicker} />
+      <AdminSkeleton style={styles.textarea} />
+      <AdminSkeleton style={styles.field} />
+      <AdminSkeleton style={styles.field} />
+      <View style={styles.chips}>
+        <AdminSkeleton style={styles.chip} />
+        <AdminSkeleton style={styles.chipWide} />
+        <AdminSkeleton style={styles.chip} />
+      </View>
+    </>
+  );
+}
+
+function GroupEditorFields() {
+  return (
+    <>
+      <AdminSkeleton style={styles.field} />
+      <AdminSkeleton style={styles.textarea} />
+    </>
   );
 }
 
@@ -98,12 +169,20 @@ const styles = {
   base: { backgroundColor: '#27272A', borderRadius: 8 },
   screen: { backgroundColor: colors.background, flex: 1 },
   list: { gap: 2, paddingTop: 2 },
-  listRow: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, minHeight: 62 },
+  listRow: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, minHeight: 58 },
   listIcon: { borderRadius: 8, height: 20, width: 20 },
   listContent: { flex: 1, gap: 7 },
   listTitle: { height: 14, width: '54%' as const },
   listSubtitle: { height: 10, width: '36%' as const },
   chevron: { height: 14, width: 8 },
+  tagsList: { gap: 0 },
+  tagGroup: { borderBottomColor: colors.border, borderBottomWidth: 1 },
+  tagGroupHeader: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 12, minHeight: 58 },
+  groupAction: { height: 16, width: 20 },
+  tagRows: { marginLeft: 12 },
+  tagRow: { alignItems: 'center' as const, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row' as const, gap: 12, minHeight: 56 },
+  tagColor: { borderRadius: 8, height: 16, width: 16 },
+  tagTitle: { flex: 1, height: 14, maxWidth: '54%' as const },
   metrics: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 10 },
   metric: { backgroundColor: '#18181B', borderRadius: 12, flexGrow: 1, gap: 8, minWidth: '30%' as const, padding: 14 },
   metricIcon: { borderRadius: 8, height: 18, width: 18 },
@@ -116,6 +195,12 @@ const styles = {
   editorTitle: { height: 20, width: 132 },
   field: { height: 48, width: '100%' as const },
   textarea: { height: 112, width: '100%' as const },
+  coordinates: { height: 76, width: '100%' as const },
+  section: { height: 82, width: '100%' as const },
+  groupPicker: { height: 62, width: '100%' as const },
+  chips: { flexDirection: 'row' as const, gap: 8 },
+  chip: { borderRadius: 12, height: 34, width: 72 },
+  chipWide: { borderRadius: 12, height: 34, width: 88 },
   editorFooter: { borderTopColor: colors.border, borderTopWidth: 1, padding: 16 },
   button: { borderRadius: 24, height: 48, width: '100%' as const },
   galleryContent: { gap: 14, padding: 24, paddingBottom: 40 },

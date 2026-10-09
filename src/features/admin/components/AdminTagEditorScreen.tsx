@@ -41,7 +41,7 @@ export function AdminTagEditorScreen({ create = false }: { create?: boolean }) {
   });
 
   if (!isAdminAccount(account)) return null;
-  if (groups.isLoading || (!create && tag.isLoading)) return <AdminEditorSkeleton />;
+  if (groups.isLoading || (!create && tag.isLoading)) return <AdminEditorSkeleton variant="tag" />;
   if (groups.isError || (!create && tag.isError) || (!create && !tag.data)) {
     return <EditorState error onRetry={() => void Promise.all([groups.refetch(), tag.refetch()])} />;
   }
