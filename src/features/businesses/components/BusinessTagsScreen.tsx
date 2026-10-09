@@ -8,7 +8,7 @@ import { TextField } from '@/components/TextField';
 import { businessEditorApi } from '@/features/businesses/business-editor-api';
 import { invalidateBusinessCaches } from '@/features/businesses/business-cache';
 import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
-import { useOnboardingInterestsData } from '@/features/onboarding/viewmodels/useOnboardingData';
+import { useOnboardingTags } from '@/features/onboarding/viewmodels/useOnboardingData';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -23,7 +23,7 @@ export function BusinessTagsScreen() {
     queryFn: () => businessEditorApi.getEditorData(accountId!),
     queryKey: ['business-editor', accountId],
   });
-  const { tagGroups, tags } = useOnboardingInterestsData();
+  const tags = useOnboardingTags('business');
   const [search, setSearch] = useState('');
   const [activeGroup, setActiveGroup] = useState<string | 'all'>('all');
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -36,14 +36,15 @@ export function BusinessTagsScreen() {
 
   const groups = useMemo(() => {
     const allTags = tags.data ?? [];
-    const known = (tagGroups.data ?? []).map((group) => ({
-      ...group,
-      tags: allTags.filter((tag) => tag.group_id === group.id),
-    }));
-    const groupedIds = new Set(known.map((group) => group.id));
-    const ungrouped = allTags.filter((tag) => !groupedIds.has(tag.group_id));
-    return ungrouped.length ? [...known, { id: 'other', name: 'Outros', tags: ungrouped }] : known;
-  }, [tagGroups.data, tags.data]);
+    const groupsById = new Map<string, { id: string; name: string; tags: OnboardingTag[] }>();
+    for (const tag of allTags) {
+      const group = tag.group ?? { id: tag.group_id, name: 'Outros' };
+      const current = groupsById.get(group.id) ?? { ...group, tags: [] };
+      current.tags.push(tag);
+      groupsById.set(group.id, current);
+    }
+    return [...groupsById.values()];
+  }, [tags.data]);
 
   const normalizedSearch = search.trim().toLocaleLowerCase('pt-BR');
   const visibleGroups = useMemo(
@@ -92,14 +93,9 @@ export function BusinessTagsScreen() {
     setOpenGroup(groupId === 'all' ? null : groupId);
   }
 
-  if (editor.isLoading || tagGroups.isLoading || tags.isLoading) return <TagsState loading />;
-  if (editor.isError || !editor.data || tagGroups.isError || tags.isError)
-    return (
-      <TagsState
-        error
-        onRetry={() => void Promise.all([editor.refetch(), tagGroups.refetch(), tags.refetch()])}
-      />
-    );
+  if (editor.isLoading || tags.isLoading) return <TagsState loading />;
+  if (editor.isError || !editor.data || tags.isError)
+    return <TagsState error onRetry={() => void Promise.all([editor.refetch(), tags.refetch()])} />;
 
   return (
     <View style={styles.screen}>
