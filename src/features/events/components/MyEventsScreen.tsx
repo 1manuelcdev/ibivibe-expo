@@ -215,9 +215,6 @@ function EventOptionsModal({
       <Pressable onPress={onClose} style={styles.modalOverlay}>
         <Pressable onPress={() => undefined} style={styles.optionsCard}>
           <View style={styles.optionsHeader}>
-            <View style={styles.optionsIcon}>
-              <Ionicons color={colors.primary} name="calendar-outline" size={20} />
-            </View>
             <View style={styles.optionsHeading}>
               <Text numberOfLines={1} style={styles.optionsTitle}>
                 {event?.name}
@@ -228,7 +225,6 @@ function EventOptionsModal({
               <Ionicons color={colors.mutedForeground} name="close" size={21} />
             </Pressable>
           </View>
-          <View style={styles.optionsDivider} />
           <Pressable onPress={onEdit} style={styles.optionAction}>
             <View style={styles.optionActionIcon}>
               <Ionicons color={colors.foreground} name="create-outline" size={19} />
@@ -408,18 +404,9 @@ const styles = {
     width: '100%' as const,
   },
   optionsHeader: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 10 },
-  optionsIcon: {
-    alignItems: 'center' as const,
-    backgroundColor: 'rgba(159,255,139,0.12)',
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center' as const,
-    width: 40,
-  },
   optionsHeading: { flex: 1, gap: 2, minWidth: 0 },
   optionsTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
   optionsCopy: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  optionsDivider: { backgroundColor: colors.border, height: 1, marginVertical: 16 },
   optionAction: {
     alignItems: 'center' as const,
     backgroundColor: '#27272A',
