@@ -119,6 +119,7 @@ export function AdminTagsScreen() {
             setCreateVisible(false);
             router.push('/(app)/admin/tags/groups/new');
           }}
+          style={styles.createFirstAction}
           title="Novo grupo"
         />
         <ActionModalItem
@@ -128,6 +129,7 @@ export function AdminTagsScreen() {
             setCreateVisible(false);
             router.push('/(app)/admin/tags/new');
           }}
+          style={styles.createFollowingAction}
           title="Nova tag"
         />
       </ActionModal>
@@ -188,6 +190,8 @@ const styles = {
     top: 9,
     width: 32,
   },
+  createFirstAction: { marginTop: 14 },
+  createFollowingAction: { marginTop: 8 },
   tag: { alignItems: 'center' as const, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row' as const, gap: 12, marginLeft: 12, minHeight: 56, paddingLeft: 2 },
   color: { borderRadius: 8, height: 16, width: 16 },
   tagName: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-Medium', fontSize: 15 },
