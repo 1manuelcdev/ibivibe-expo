@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { homeApi } from '@/features/home/home-api';
+import { useEntityCoverUrls } from '@/features/medias/useEntityCoverUrls';
 import { useOnboardingTags } from '@/features/onboarding/viewmodels/useOnboardingData';
 import { getSuggestedCategories } from '@/features/search/search-suggestions';
 import { useSessionStore } from '@/stores/session-store';
@@ -126,11 +127,15 @@ function CitiesSection({
   isLoading,
   onSeeAll,
 }: {
-  cities: Array<{ cover_img_url?: string | null; id: string; name: string; tags?: string[] }>;
+  cities: Array<{ id: string; name: string; tags?: string[] }>;
   isLoading: boolean;
   onSeeAll: () => void;
 }) {
   const router = useRouter();
+  const cityCoverUrls = useEntityCoverUrls(
+    'city',
+    cities.map((city) => city.id),
+  );
   return (
     <View style={styles.section}>
       <SectionHeader onSeeAll={onSeeAll} title="Explore as cidades da Ibiapaba" />
@@ -147,8 +152,8 @@ function CitiesSection({
               onPress={() => router.push(`/(app)/cities/${city.id}`)}
               style={styles.cityCard}
             >
-              {city.cover_img_url ? (
-                <Image source={{ uri: city.cover_img_url }} style={styles.cityImage} />
+              {cityCoverUrls.get(city.id) ? (
+                <Image source={{ uri: cityCoverUrls.get(city.id)! }} style={styles.cityImage} />
               ) : (
                 <View style={styles.cityImageFallback}>
                   <Ionicons color={colors.mutedForeground} name="location-outline" size={28} />
