@@ -73,9 +73,7 @@ export function AdminPanelScreen() {
           onPress={() => router.push('/(app)/admin/cities')}
           style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
-          <View style={styles.actionIcon}>
-            <Ionicons color={colors.primary} name="location-outline" size={21} />
-          </View>
+          <Ionicons color={colors.foreground} name="location-outline" size={22} />
           <View style={styles.actionContent}>
             <Text style={styles.actionTitle}>Cidades</Text>
             <Text style={styles.actionDescription}>Informações, tags e mídias.</Text>
@@ -88,9 +86,7 @@ export function AdminPanelScreen() {
           onPress={() => router.push('/(app)/admin/tags')}
           style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
-          <View style={styles.actionIcon}>
-            <Ionicons color={colors.primary} name="pricetags-outline" size={21} />
-          </View>
+          <Ionicons color={colors.foreground} name="pricetags-outline" size={22} />
           <View style={styles.actionContent}>
             <Text style={styles.actionTitle}>Tags</Text>
               <Text style={styles.actionDescription}>Nome, descrição, cor e ordem.</Text>
@@ -172,14 +168,6 @@ const styles = {
     gap: 12,
     minHeight: 76,
     padding: 12,
-  },
-  actionIcon: {
-    alignItems: 'center' as const,
-    backgroundColor: 'rgba(159, 255, 139, 0.12)',
-    borderRadius: 12,
-    height: 42,
-    justifyContent: 'center' as const,
-    width: 42,
   },
   actionContent: { flex: 1, gap: 3 },
   actionTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
