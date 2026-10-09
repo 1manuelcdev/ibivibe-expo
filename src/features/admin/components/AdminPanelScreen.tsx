@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { AppBackButton } from '@/components/AppBackButton';
 import { AdminMetricsSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi, type AdminOverview } from '@/features/admin/admin-api';
@@ -36,7 +35,7 @@ export function AdminPanelScreen() {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <AppBackButton fallbackHref="/(app)/accounts" />
+          <AdminOverviewBackButton />
           <Text style={styles.title}>Painel admin</Text>
           <Pressable
             accessibilityLabel="Atualizar resumo operacional"
@@ -126,7 +125,7 @@ function DeniedState() {
   return (
     <View style={styles.screen}>
       <View style={styles.deniedHeader}>
-        <AppBackButton fallbackHref="/(app)/accounts" />
+        <AdminOverviewBackButton />
         <Text style={styles.title}>Painel admin</Text>
       </View>
       <View style={styles.denied}>
@@ -138,6 +137,22 @@ function DeniedState() {
   );
 }
 
+function AdminOverviewBackButton() {
+  const router = useRouter();
+
+  return (
+    <Pressable
+      accessibilityLabel="Voltar para conta"
+      accessibilityRole="button"
+      hitSlop={8}
+      onPress={() => router.replace('/(app)/accounts')}
+      style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+    >
+      <Ionicons color={colors.foreground} name="arrow-back" size={24} />
+    </Pressable>
+  );
+}
+
 function formatNumber(value: number) {
   return new Intl.NumberFormat('pt-BR').format(value);
 }
@@ -146,6 +161,7 @@ const styles = {
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { gap: 24, padding: 24, paddingBottom: 40 },
   header: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 16 },
+  backButton: { alignItems: 'center' as const, height: 32, justifyContent: 'center' as const, width: 32 },
   title: { color: colors.foreground, flex: 1, fontFamily: 'DMSans-SemiBold', fontSize: 20 },
   sectionHeader: { alignItems: 'flex-start' as const, flexDirection: 'row' as const, justifyContent: 'space-between' as const },
   sectionTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
