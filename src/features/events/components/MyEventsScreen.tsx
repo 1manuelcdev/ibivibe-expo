@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
+import { EventCard } from '@/components/EventCard';
 import { Toast, type ToastVariant } from '@/components/Toast';
 import { eventApi } from '@/features/events/event-api';
 import { useEventDraftStore } from '@/features/events/event-draft-store';
@@ -290,30 +291,15 @@ function EventSection({
       <View style={styles.eventList}>
         {events.map((event) => (
           <View key={event.id} style={styles.eventRow}>
-            <Pressable onPress={() => onEventPress(event)} style={styles.eventCard}>
-              {coverUrl(event) ? (
-                <Image source={{ uri: coverUrl(event)! }} style={styles.eventImage} />
-              ) : (
-                <View style={[styles.eventImage, styles.imagePlaceholder]}>
-                  <Ionicons color={colors.mutedForeground} name="calendar-outline" size={26} />
-                </View>
-              )}
-              <View style={styles.eventText}>
-                <Text numberOfLines={2} style={styles.eventName}>
-                  {event.name}
-                </Text>
-                <Text style={styles.eventDate}>
-                  {formatEventDate(event.start_date ?? undefined)}
-                </Text>
-                <View style={styles.badges}>
-                  {(event.tags?.slice(0, 3).map((tag) => tag.name) ?? ['Evento']).map((tag) => (
-                    <View key={tag} style={styles.badge}>
-                      <Text style={styles.badgeLabel}>{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </Pressable>
+            <EventCard
+              date={formatEventDate(event.start_date ?? undefined)}
+              fullWidth
+              image={coverUrl(event)}
+              onPress={() => onEventPress(event)}
+              style={styles.eventCard}
+              tags={event.tags?.map((tag) => tag.name) ?? ['Evento']}
+              title={event.name}
+            />
             <Pressable
               accessibilityLabel={`Opções de ${event.name}`}
               hitSlop={8}
@@ -485,34 +471,7 @@ const styles = {
     flexDirection: 'row' as const,
     width: '100%' as const,
   },
-  eventCard: {
-    alignItems: 'center' as const,
-    borderRadius: 12,
-    flex: 1,
-    flexDirection: 'row' as const,
-    gap: 12,
-    minWidth: 0,
-    overflow: 'hidden' as const,
-    padding: 8,
-  },
-  eventImage: { borderRadius: 8, height: 80, width: 80 },
-  imagePlaceholder: {
-    alignItems: 'center' as const,
-    backgroundColor: '#27272A',
-    justifyContent: 'center' as const,
-  },
-  eventText: { gap: 8, minWidth: 0 },
-  eventName: { color: '#F4F4F5', fontFamily: 'DMSans-SemiBold', fontSize: 12, maxWidth: 160 },
-  eventDate: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  badges: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 4, maxWidth: 160 },
-  badge: {
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 10 },
+  eventCard: { paddingVertical: 8 },
   optionsButton: {
     alignItems: 'center' as const,
     backgroundColor: 'transparent',

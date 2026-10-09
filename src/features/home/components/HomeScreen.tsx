@@ -22,10 +22,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { EventCard } from '@/components/EventCard';
 import { LocationSheet } from '@/features/home/components/LocationSheet';
 import type { HomeCity } from '@/features/home/models/home-types';
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
 import { colors, radius } from '@/theme/tokens';
+import { normalizeImageUrl } from '@/utils/normalize-image-url';
 
 const categories = [
   'Restaurantes',
@@ -41,41 +43,7 @@ const carouselDuration = 7000;
 const fallbackImages = {
   business: 'briefcase-outline' as const,
   city: 'location-outline' as const,
-  event: 'calendar-outline' as const,
 };
-
-const legacyCdnPathPattern = /^\/(cities|businesses|events|users)\//;
-
-function normalizeImageUrl(value?: string | null) {
-  const url = value?.trim();
-
-  if (!url) return null;
-  const normalizedProtocolUrl = url.startsWith('//') ? `https:${url}` : url;
-
-  if (
-    !normalizedProtocolUrl.startsWith('http://') &&
-    !normalizedProtocolUrl.startsWith('https://')
-  ) {
-    return null;
-  }
-
-  try {
-    const parsedUrl = new URL(normalizedProtocolUrl);
-
-    // Compatibilidade com URLs antigas do Flutter/seed. Os arquivos atuais
-    // ficam em /media, enquanto versões antigas apontavam direto para /cities.
-    if (
-      parsedUrl.hostname === 'cdn.ibivibe.com.br' &&
-      legacyCdnPathPattern.test(parsedUrl.pathname)
-    ) {
-      parsedUrl.pathname = `/media${parsedUrl.pathname}`;
-    }
-
-    return parsedUrl.toString();
-  } catch {
-    return null;
-  }
-}
 
 export function HomeScreen() {
   const router = useRouter();
@@ -381,33 +349,6 @@ function HorizontalCards({ children }: { children: React.ReactNode }) {
   );
 }
 
-function EventCard({
-  date,
-  image,
-  onPress,
-  tags,
-  title,
-}: {
-  date: string;
-  image?: string | null;
-  onPress?: () => void;
-  tags: string[];
-  title: string;
-}) {
-  return (
-    <Pressable onPress={onPress} style={styles.horizontalCard}>
-      <RemoteImage icon={fallbackImages.event} source={image} style={styles.thumb} />
-      <View style={styles.cardBody}>
-        <Text numberOfLines={1} style={styles.cardTitle}>
-          {title}
-        </Text>
-        <Text style={styles.cardMeta}>{date}</Text>
-        <EntityTags tags={tags} />
-      </View>
-    </Pressable>
-  );
-}
-
 function BusinessCard({
   image,
   onPress,
@@ -640,7 +581,6 @@ const styles = {
     padding: 8,
     width: 260,
   },
-  thumb: { backgroundColor: '#27272A', borderRadius: 8, height: 80, width: 80 },
   businessAvatar: {
     backgroundColor: '#27272A',
     borderRadius: 999,
