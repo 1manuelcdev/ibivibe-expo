@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AppBackButton } from '@/components/AppBackButton';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi } from '@/features/admin/admin-api';
 import { useSessionStore } from '@/stores/session-store';
@@ -23,20 +24,13 @@ export function AdminCitiesScreen() {
     );
   }, [cities.data, search]);
 
-  function goBack() {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(app)/admin');
-  }
-
   if (!isAdminAccount(account)) return null;
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Voltar" hitSlop={8} onPress={goBack}>
-            <Ionicons color={colors.foreground} name="arrow-back" size={25} />
-          </Pressable>
+          <AppBackButton fallbackHref="/(app)/admin" />
           <Text style={styles.title}>Editar cidades</Text>
         </View>
         <Text style={styles.description}>

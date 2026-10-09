@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
+import { AppBackButton } from '@/components/AppBackButton';
 import { TextField } from '@/components/TextField';
 import { adminApi, type AdminCity } from '@/features/admin/admin-api';
 import { isAdminAccount } from '@/features/admin/admin-access';
@@ -64,23 +64,16 @@ function CityEditorForm({ city }: { city: AdminCity }) {
     onError: (error) => Alert.alert('Não foi possível salvar a cidade', getApiErrorMessage(error)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'cities'] });
-      router.back();
+      router.dismissTo('/(app)/admin/cities');
     },
   });
   const updateField = (field: keyof FormState, value: string) =>
     setForm((current) => ({ ...current, [field]: value }));
-  const goBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(app)/admin/cities');
-  };
-
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Voltar" hitSlop={8} onPress={goBack}>
-            <Ionicons color={colors.foreground} name="arrow-back" size={25} />
-          </Pressable>
+          <AppBackButton fallbackHref="/(app)/admin/cities" />
           <Text style={styles.title}>Editar cidade</Text>
         </View>
         <TextField

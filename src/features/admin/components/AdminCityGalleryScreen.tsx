@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
+import { AppBackButton } from '@/components/AppBackButton';
 import { FullScreenImageViewer } from '@/components/FullScreenImageViewer';
 import { adminApi, type AdminCityMedia } from '@/features/admin/admin-api';
 import {
@@ -23,7 +24,6 @@ export function AdminCityGalleryScreen() {
   const { cityId } = useLocalSearchParams<{ cityId: string }>();
   const account = useSessionStore((state) => state.account);
   const queryClient = useQueryClient();
-  const router = useRouter();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AdminCityMedia | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -134,11 +134,6 @@ export function AdminCityGalleryScreen() {
     reorder.mutate(next);
   }
 
-  function goBack() {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(app)/admin/cities');
-  }
-
   if (!isAdminAccount(account)) return null;
   if (gallery.isLoading) return <GalleryState loading />;
   if (gallery.isError) return <GalleryState error onRetry={() => gallery.refetch()} />;
@@ -146,9 +141,9 @@ export function AdminCityGalleryScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" hitSlop={8} onPress={goBack}>
-          <Ionicons color={colors.foreground} name="arrow-back" size={25} />
-        </Pressable>
+        <AppBackButton
+          fallbackHref={{ pathname: '/(app)/admin/cities/[cityId]', params: { cityId } }}
+        />
         <Text style={styles.title}>Galeria de mídias</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AppBackButton } from '@/components/AppBackButton';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
@@ -10,15 +11,10 @@ export function AdminPanelScreen() {
   const account = useSessionStore((state) => state.account);
   const router = useRouter();
 
-  function goBack() {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(app)/accounts');
-  }
-
   if (!isAdminAccount(account)) {
     return (
       <View style={styles.screen}>
-        <Header onBack={goBack} />
+        <Header />
         <View style={styles.denied}>
           <Ionicons color={colors.mutedForeground} name="lock-closed-outline" size={28} />
           <Text style={styles.deniedTitle}>Acesso restrito</Text>
@@ -33,7 +29,7 @@ export function AdminPanelScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Header onBack={goBack} />
+        <Header />
         <View style={styles.intro}>
           <Text style={styles.introTitle}>Ações administrativas</Text>
           <Text style={styles.introText}>Gerencie os conteúdos que aparecem no aplicativo.</Text>
@@ -58,12 +54,10 @@ export function AdminPanelScreen() {
   );
 }
 
-function Header({ onBack }: { onBack: () => void }) {
+function Header() {
   return (
     <View style={styles.header}>
-      <Pressable accessibilityLabel="Voltar" hitSlop={8} onPress={onBack}>
-        <Ionicons color={colors.foreground} name="arrow-back" size={25} />
-      </Pressable>
+      <AppBackButton fallbackHref="/(app)/accounts" />
       <Text style={styles.title}>Painel do Administrador</Text>
     </View>
   );
