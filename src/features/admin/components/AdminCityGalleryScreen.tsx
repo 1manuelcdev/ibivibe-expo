@@ -17,6 +17,7 @@ import {
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
+import { normalizeImageUrl } from '@/utils/normalize-image-url';
 
 const MAX_MEDIA = 10;
 
@@ -193,7 +194,9 @@ export function AdminCityGalleryScreen() {
         )}
       </ScrollView>
       <FullScreenImageViewer
-        images={media.filter((item) => !isVideo(item)).map((item) => item.url)}
+        images={media
+          .filter((item) => !isVideo(item))
+          .map((item) => normalizeImageUrl(item.url) ?? item.url)}
         initialIndex={viewerIndex ?? 0}
         onClose={() => setViewerIndex(null)}
         visible={viewerIndex !== null}
@@ -245,7 +248,7 @@ function MediaCard({
             <Ionicons color={colors.foreground} name="play-circle-outline" size={30} />
           </View>
         ) : (
-          <Image source={{ uri: item.url }} style={styles.image} />
+          <Image source={{ uri: normalizeImageUrl(item.url) ?? item.url }} style={styles.image} />
         )}
       </Pressable>
       {isCover ? (

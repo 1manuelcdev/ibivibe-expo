@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { AppBackButton } from '@/components/AppBackButton';
@@ -12,6 +12,7 @@ import { EventTagsSheet } from '@/features/events/components/EventTagsSheet';
 import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
+import { normalizeImageUrl } from '@/utils/normalize-image-url';
 
 type FormState = {
   description: string;
@@ -42,6 +43,13 @@ function CityEditorForm({ city }: { city: AdminCity }) {
     () => city.tags?.map((tag) => ({ ...tag, group_id: '' })) ?? [],
   );
   const [tagsVisible, setTagsVisible] = useState(false);
+  const medias = useQuery({
+    queryFn: () => adminApi.getCityMedia(city.id),
+    queryKey: ['admin', 'city-media', city.id],
+  });
+  const orderedMedias = [...(medias.data ?? [])].sort(
+    (left, right) => (left.position ?? 0) - (right.position ?? 0),
+  );
   const save = useMutation({
     mutationFn: async () => {
       const latitude = form.latitude.trim();
@@ -160,6 +168,37 @@ function CityEditorForm({ city }: { city: AdminCity }) {
               <Text style={styles.secondaryButtonLabel}>Gerenciar</Text>
             </Pressable>
           </View>
+          {medias.isLoading ? (
+            <ActivityIndicator color={colors.primary} style={styles.mediaLoading} />
+          ) : orderedMedias.length ? (
+            <ScrollView
+              contentContainerStyle={styles.mediaPreviews}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {orderedMedias.map((media) => (
+                <View key={media.id} style={styles.mediaPreview}>
+                  {media.media_type?.startsWith('video') ? (
+                    <View style={[styles.previewImage, styles.videoPreview]}>
+                      <Text style={styles.videoLabel}>Vídeo</Text>
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: normalizeImageUrl(media.url) ?? media.url }}
+                      style={styles.previewImage}
+                    />
+                  )}
+                  {media.is_cover ? (
+                    <View style={styles.coverBadge}>
+                      <Text style={styles.coverBadgeLabel}>Capa</Text>
+                    </View>
+                  ) : null}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <Text style={styles.sectionDescription}>Nenhuma mídia adicionada.</Text>
+          )}
         </View>
       </ScrollView>
       <View style={styles.footer}>
@@ -262,6 +301,22 @@ const styles = {
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
+  mediaLoading: { alignSelf: 'flex-start' as const },
+  mediaPreviews: { gap: 10, paddingRight: 24 },
+  mediaPreview: { height: 88, position: 'relative' as const, width: 88 },
+  previewImage: { backgroundColor: '#27272A', borderRadius: 10, height: 88, width: 88 },
+  videoPreview: { alignItems: 'center' as const, justifyContent: 'center' as const },
+  videoLabel: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 12 },
+  coverBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    bottom: 5,
+    left: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    position: 'absolute' as const,
+  },
+  coverBadgeLabel: { color: colors.primaryForeground, fontFamily: 'DMSans-SemiBold', fontSize: 10 },
   footer: {
     backgroundColor: colors.background,
     borderTopColor: colors.border,

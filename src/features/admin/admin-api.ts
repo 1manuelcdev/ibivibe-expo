@@ -4,7 +4,6 @@ import type { EventMediaUpload, UpdateEventMediaInput } from '@/features/events/
 import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
 
 export type AdminCity = {
-  cover_img_url?: string | null;
   description?: string | null;
   id: string;
   location?: { coordinates?: [number, number]; type?: string } | null;
@@ -14,7 +13,6 @@ export type AdminCity = {
 };
 
 export type AdminCityUpdate = {
-  cover_img_url?: string | null;
   description?: string | null;
   latitude?: number;
   longitude?: number;
