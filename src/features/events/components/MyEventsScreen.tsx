@@ -27,7 +27,7 @@ export function MyEventsScreen() {
   const activeEvents = events.filter((event) => event.status !== 'draft' && !isPast(event));
   const pastEvents = events.filter((event) => event.status !== 'draft' && isPast(event));
   const remove = useMutation({
-    mutationFn: () => eventApi.remove(deleteEvent!.id),
+    mutationFn: (eventId: string) => eventApi.remove(eventId),
     onError: (error) => setDeleteError(getApiErrorMessage(error)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['my-events'] });
@@ -123,7 +123,9 @@ export function MyEventsScreen() {
             setDeleteError(null);
           }
         }}
-        onConfirm={() => remove.mutate()}
+        onConfirm={() => {
+          if (deleteEvent) remove.mutate(deleteEvent.id);
+        }}
       />
     </View>
   );

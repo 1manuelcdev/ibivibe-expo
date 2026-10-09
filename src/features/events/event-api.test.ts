@@ -40,10 +40,12 @@ describe('event API', () => {
     mocks.delete.mockResolvedValue({ data: {} });
 
     await eventApi.getOwned();
+    await eventApi.remove('event-1');
     await eventApi.reorderMedia('event-1', ['media-2', 'media-1']);
     await eventApi.deleteMedia('event-1', 'media-1');
 
     expect(mocks.get).toHaveBeenCalledWith('/events/owned');
+    expect(mocks.delete).toHaveBeenCalledWith('/events/event-1');
     expect(mocks.patch).toHaveBeenCalledWith('/events/event-1/media/order', {
       media_ids: ['media-2', 'media-1'],
     });
