@@ -413,11 +413,12 @@ const styles = {
     borderRadius: 12,
     flexDirection: 'row' as const,
     gap: 10,
+    marginTop: 20,
     padding: 12,
   },
   optionActionIcon: {
     alignItems: 'center' as const,
-    backgroundColor: '#3F3F46',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     height: 32,
     justifyContent: 'center' as const,
@@ -439,7 +440,7 @@ const styles = {
   },
   deleteActionIcon: {
     alignItems: 'center' as const,
-    backgroundColor: 'rgba(248,113,113,0.14)',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     height: 32,
     justifyContent: 'center' as const,
