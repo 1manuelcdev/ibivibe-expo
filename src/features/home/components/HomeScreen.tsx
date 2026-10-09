@@ -91,9 +91,9 @@ export function HomeScreen() {
         </Pressable>
         <SponsoredHighlights cities={citiesQuery.data ?? []} />
         <Categories />
-        <Section title="Acontecendo perto de você" onSeeAll={() => router.push('/(app)/events')}>
+        <Section title="Eventos acontecendo perto" onSeeAll={() => router.push('/(app)/events')}>
           <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
-            <HorizontalCards>
+            <HorizontalCards gap={20}>
               {eventItems?.map((event) => (
                 <EventCard
                   key={event.id}
@@ -338,11 +338,11 @@ function Section({
   );
 }
 
-function HorizontalCards({ children }: { children: React.ReactNode }) {
+function HorizontalCards({ children, gap = 12 }: { children: React.ReactNode; gap?: number }) {
   return (
     <ScrollView
+      contentContainerStyle={[styles.horizontalCards, { gap }]}
       horizontal
-      contentContainerStyle={styles.horizontalCards}
       showsHorizontalScrollIndicator={false}
     >
       {children}
