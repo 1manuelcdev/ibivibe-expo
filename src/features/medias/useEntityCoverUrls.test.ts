@@ -15,4 +15,10 @@ describe('getCoverUrl', () => {
   it('does not fall back to the first media when no cover exists', () => {
     expect(getCoverUrl([{ is_cover: false, url: 'https://cdn.example.com/1.jpg' }])).toBeNull();
   });
+
+  it('normalizes a legacy path migrated into a media record', () => {
+    expect(getCoverUrl([{ is_cover: true, url: '/cities/ubajara.png' }])).toBe(
+      'https://cdn.ibivibe.com.br/media/cities/ubajara.png',
+    );
+  });
 });
