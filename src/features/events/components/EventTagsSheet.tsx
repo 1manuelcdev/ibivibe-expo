@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'rea
 
 import { BottomSheet } from '@/components/BottomSheet';
 import { TextField } from '@/components/TextField';
-import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
+import type { OnboardingTag, TagTargetType } from '@/features/onboarding/models/onboarding-types';
 import { useOnboardingTags } from '@/features/onboarding/viewmodels/useOnboardingData';
 import { colors } from '@/theme/tokens';
 
@@ -14,14 +14,18 @@ export function EventTagsSheet({
   onClose,
   onSave,
   selectedTags,
+  targetType = 'event',
+  title = 'Tags do evento',
   visible,
 }: {
   onClose: () => void;
   onSave: (tags: OnboardingTag[]) => void;
   selectedTags: OnboardingTag[];
+  targetType?: TagTargetType;
+  title?: string;
   visible: boolean;
 }) {
-  const tags = useOnboardingTags('event');
+  const tags = useOnboardingTags(targetType);
   const [search, setSearch] = useState('');
   const [activeGroup, setActiveGroup] = useState<string | 'all'>('all');
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -71,7 +75,7 @@ export function EventTagsSheet({
     <BottomSheet onClose={onClose} visible={visible}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Tags do evento</Text>
+          <Text style={styles.title}>{title}</Text>
         </View>
         <Pressable accessibilityLabel="Fechar" onPress={onClose}>
           <Ionicons color={colors.foreground} name="close" size={24} />
@@ -79,9 +83,7 @@ export function EventTagsSheet({
       </View>
       <Text style={styles.copy}>Adicione até {MAX_TAGS - selectedTags.length} tags</Text>
       {tags.isLoading ? <ActivityIndicator color={colors.primary} style={styles.loader} /> : null}
-      {tags.isError ? (
-        <Text style={styles.error}>Não foi possível carregar as tags do evento.</Text>
-      ) : null}
+      {tags.isError ? <Text style={styles.error}>Não foi possível carregar as tags.</Text> : null}
       {selectedTags.length ? (
         <View style={styles.selectedTags}>
           {selectedTags.map((tag) => (

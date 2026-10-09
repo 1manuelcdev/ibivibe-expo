@@ -8,6 +8,7 @@ export type Account = {
   email_verified?: boolean;
   is_verified?: boolean;
   needs_onboarding?: boolean;
+  role?: 'user' | 'admin' | 'super_admin';
   type?: string;
   [key: string]: unknown;
 };
