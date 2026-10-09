@@ -79,7 +79,12 @@ export function MyEventsScreen() {
           <Text style={styles.title}>Meus Eventos</Text>
         </View>
 
-        <View style={styles.createRow}>
+        <ScrollView
+          contentContainerStyle={styles.filterContent}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryScroll}
+        >
           <Pressable
             onPress={() => {
               useEventDraftStore.getState().clear();
@@ -90,29 +95,22 @@ export function MyEventsScreen() {
             <Ionicons color={colors.primaryForeground} name="calendar-outline" size={16} />
             <Text style={styles.createButtonLabel}>Novo Evento</Text>
           </Pressable>
-          <ScrollView
-            contentContainerStyle={styles.filterContent}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterScroll}
-          >
-            {eventCategories.map((category) => {
-              const selected = selectedCategory === category.key;
+          {eventCategories.map((category) => {
+            const selected = selectedCategory === category.key;
 
-              return (
-                <Pressable
-                  key={category.key}
-                  onPress={() => setSelectedCategory(category.key)}
-                  style={[styles.filterButton, selected && styles.filterButtonActive]}
-                >
-                  <Text style={[styles.filterLabel, selected && styles.filterLabelActive]}>
-                    {category.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+            return (
+              <Pressable
+                key={category.key}
+                onPress={() => setSelectedCategory(category.key)}
+                style={[styles.filterButton, selected && styles.filterButtonActive]}
+              >
+                <Text style={[styles.filterLabel, selected && styles.filterLabelActive]}>
+                  {category.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         {query.isLoading ? <EventsState text="Carregando eventos..." /> : null}
         {query.isError ? (
@@ -364,12 +362,6 @@ const styles = {
     paddingHorizontal: 8,
   },
   title: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 18 },
-  createRow: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 12,
-    width: '100%' as const,
-  },
   createButton: {
     alignItems: 'center' as const,
     backgroundColor: colors.primary,
@@ -386,8 +378,8 @@ const styles = {
     fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
   },
-  filterScroll: { flex: 1, minWidth: 0 },
-  filterContent: { gap: 8 },
+  categoryScroll: { width: '100%' as const },
+  filterContent: { alignItems: 'center' as const, gap: 8 },
   filterButton: {
     alignItems: 'center' as const,
     borderColor: colors.border,
