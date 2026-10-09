@@ -15,6 +15,14 @@ import { adminApi } from '@/features/admin/admin-api';
 describe('admin API', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('loads the protected operational overview', async () => {
+    mocks.get.mockResolvedValue({ data: {} });
+
+    await adminApi.getOverview();
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/overview');
+  });
+
   it('uses the protected city endpoints for data and tags', async () => {
     mocks.get.mockResolvedValue({ data: [] });
     mocks.patch.mockResolvedValue({ data: {} });

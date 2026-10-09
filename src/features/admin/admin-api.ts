@@ -29,7 +29,21 @@ export type AdminCityMedia = {
   url: string;
 };
 
+export type AdminOverview = {
+  accounts: number;
+  businesses: number;
+  cities: number;
+  events: number;
+  generated_at: string;
+  leads: number;
+  reviews: number;
+};
+
 export const adminApi = {
+  async getOverview() {
+    return (await apiClient.get<AdminOverview>('/admin/overview')).data;
+  },
+
   async getCities() {
     return (await apiClient.get<AdminCity[]>('/admin/resources/cities')).data;
   },
