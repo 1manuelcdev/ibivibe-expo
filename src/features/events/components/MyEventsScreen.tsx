@@ -24,8 +24,13 @@ export function MyEventsScreen() {
 
   const events = query.data ?? [];
   const draftEvents = events.filter((event) => event.status === 'draft');
-  const activeEvents = events.filter((event) => event.status !== 'draft' && !isPast(event));
-  const pastEvents = events.filter((event) => event.status !== 'draft' && isPast(event));
+  const inactiveEvents = events.filter((event) => event.status !== 'draft' && !event.active);
+  const activeEvents = events.filter(
+    (event) => event.status !== 'draft' && event.active && !isPast(event),
+  );
+  const pastEvents = events.filter(
+    (event) => event.status !== 'draft' && event.active && isPast(event),
+  );
   const remove = useMutation({
     mutationFn: (eventId: string) => eventApi.remove(eventId),
     onError: (error) => setDeleteError(getApiErrorMessage(error)),
@@ -88,6 +93,12 @@ export function MyEventsScreen() {
               onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
               onOptionsPress={setOptionsEvent}
               title="Passados"
+            />
+            <EventSection
+              events={inactiveEvents}
+              onEventPress={(event) => router.push(`/(app)/events/${event.id}`)}
+              onOptionsPress={setOptionsEvent}
+              title="Inativos"
             />
             <EventSection
               events={draftEvents}
