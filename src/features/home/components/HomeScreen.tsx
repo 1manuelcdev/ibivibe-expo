@@ -8,6 +8,7 @@ import {
   type NativeSyntheticEvent,
   type ImageStyle,
   Pressable,
+  RefreshControl,
   ScrollView,
   type StyleProp,
   Text,
@@ -50,6 +51,7 @@ const fallbackImages = {
 export function HomeScreen() {
   const router = useRouter();
   const [locationSheetVisible, setLocationSheetVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCity, setSelectedCity] = useState<HomeCity | null>(null);
   const {
     businesses: businessesQuery,
@@ -76,10 +78,30 @@ export function HomeScreen() {
     tags: city.tags?.slice(0, 2) ?? ['Ibiapaba'],
     image: cityCoverUrls.get(city.id),
   }));
+  const refreshHome = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([businessesQuery.refetch(), citiesQuery.refetch(), eventsQuery.refetch()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            colors={[colors.primary]}
+            onRefresh={() => void refreshHome()}
+            progressBackgroundColor="#18181B"
+            refreshing={refreshing}
+            tintColor={colors.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
         <HomeHeader
           city={selectedCity?.name ?? 'Toda a Ibiapaba'}
           onLocationPress={() => setLocationSheetVisible(true)}
