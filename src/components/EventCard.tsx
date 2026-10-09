@@ -89,5 +89,5 @@ const styles = {
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  badgeLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 10 },
+  badgeLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 12 },
 } as const;
