@@ -20,7 +20,7 @@ export function AccountScreen() {
     ['person-outline', 'Meu perfil'],
     ['heart-outline', 'Favoritos'],
     ...(isAdmin
-      ? [['ribbon-outline', 'Painel do Administrador'] as [keyof typeof Ionicons.glyphMap, string]]
+      ? [['shield-checkmark', 'Painel do Administrador'] as [keyof typeof Ionicons.glyphMap, string]]
       : []),
   ];
   const ownedBusiness = useOwnedBusiness();
