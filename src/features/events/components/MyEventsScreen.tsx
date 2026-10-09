@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useState } from 'react';
 
+import { getApiErrorMessage } from '@/api/client';
 import { eventApi } from '@/features/events/event-api';
 import { useEventDraftStore } from '@/features/events/event-draft-store';
 import type { Event } from '@/features/events/models/event-types';
@@ -11,7 +12,10 @@ import { colors } from '@/theme/tokens';
 
 export function MyEventsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [optionsEvent, setOptionsEvent] = useState<Event | null>(null);
+  const [deleteEvent, setDeleteEvent] = useState<Event | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const query = useQuery({
     queryFn: eventApi.getOwned,
     queryKey: ['my-events'],
@@ -21,6 +25,15 @@ export function MyEventsScreen() {
   const draftEvents = events.filter((event) => event.status === 'draft');
   const activeEvents = events.filter((event) => event.status !== 'draft' && !isPast(event));
   const pastEvents = events.filter((event) => event.status !== 'draft' && isPast(event));
+  const remove = useMutation({
+    mutationFn: () => eventApi.remove(deleteEvent!.id),
+    onError: (error) => setDeleteError(getApiErrorMessage(error)),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['my-events'] });
+      setDeleteEvent(null);
+      setDeleteError(null);
+    },
+  });
 
   return (
     <View style={styles.screen}>
@@ -93,6 +106,23 @@ export function MyEventsScreen() {
           setOptionsEvent(null);
           router.push(`/(app)/events/edit/${eventId}`);
         }}
+        onDelete={() => {
+          setDeleteError(null);
+          setDeleteEvent(optionsEvent);
+          setOptionsEvent(null);
+        }}
+      />
+      <DeleteEventModal
+        error={deleteError}
+        event={deleteEvent}
+        isDeleting={remove.isPending}
+        onCancel={() => {
+          if (!remove.isPending) {
+            setDeleteEvent(null);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={() => remove.mutate()}
       />
     </View>
   );
@@ -171,11 +201,13 @@ function EventsState({ onRetry, text }: { onRetry?: () => void; text: string }) 
 
 function EventOptionsModal({
   event,
+  onDelete,
   onClose,
   onEdit,
 }: {
   event: Event | null;
   onClose: () => void;
+  onDelete: () => void;
   onEdit: () => void;
 }) {
   return (
@@ -207,9 +239,68 @@ function EventOptionsModal({
             </View>
             <Ionicons color={colors.mutedForeground} name="chevron-forward" size={18} />
           </Pressable>
+          <Pressable onPress={onDelete} style={styles.deleteAction}>
+            <View style={styles.deleteActionIcon}>
+              <Ionicons color="#FCA5A5" name="trash-outline" size={19} />
+            </View>
+            <View style={styles.optionActionText}>
+              <Text style={styles.deleteActionTitle}>Excluir evento</Text>
+              <Text style={styles.deleteActionCopy}>Essa ação não pode ser desfeita</Text>
+            </View>
+            <Ionicons color="#FCA5A5" name="chevron-forward" size={18} />
+          </Pressable>
           <Pressable onPress={onClose} style={styles.cancelAction}>
             <Text style={styles.cancelActionLabel}>Cancelar</Text>
           </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function DeleteEventModal({
+  error,
+  event,
+  isDeleting,
+  onCancel,
+  onConfirm,
+}: {
+  error: string | null;
+  event: Event | null;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Modal animationType="fade" onRequestClose={onCancel} transparent visible={Boolean(event)}>
+      <Pressable onPress={onCancel} style={styles.modalOverlay}>
+        <Pressable
+          onPress={(pressEvent) => pressEvent.stopPropagation()}
+          style={styles.optionsCard}
+        >
+          <View style={styles.confirmIcon}>
+            <Ionicons color="#FCA5A5" name="trash-outline" size={24} />
+          </View>
+          <Text style={styles.confirmTitle}>Excluir evento?</Text>
+          <Text style={styles.confirmCopy}>
+            O evento <Text style={styles.confirmEventName}>{event?.name}</Text> será removido
+            permanentemente.
+          </Text>
+          {error ? <Text style={styles.deleteError}>{error}</Text> : null}
+          <View style={styles.confirmActions}>
+            <Pressable disabled={isDeleting} onPress={onCancel} style={styles.confirmCancelButton}>
+              <Text style={styles.confirmCancelLabel}>Cancelar</Text>
+            </Pressable>
+            <Pressable
+              disabled={isDeleting}
+              onPress={onConfirm}
+              style={[styles.confirmDeleteButton, isDeleting && styles.disabledButton]}
+            >
+              <Text style={styles.confirmDeleteLabel}>
+                {isDeleting ? 'Excluindo...' : 'Excluir'}
+              </Text>
+            </Pressable>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -300,10 +391,7 @@ const styles = {
   badgeLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 10 },
   optionsButton: {
     alignItems: 'center' as const,
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 18,
-    borderWidth: 1,
+    backgroundColor: 'transparent',
     height: 40,
     justifyContent: 'center' as const,
     width: 32,
@@ -356,8 +444,82 @@ const styles = {
   optionActionText: { flex: 1, gap: 2 },
   optionActionTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
   optionActionCopy: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
+  deleteAction: {
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(127,29,29,0.16)',
+    borderColor: 'rgba(248,113,113,0.22)',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row' as const,
+    gap: 10,
+    marginTop: 8,
+    padding: 12,
+  },
+  deleteActionIcon: {
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(248,113,113,0.14)',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center' as const,
+    width: 32,
+  },
+  deleteActionTitle: { color: '#FCA5A5', fontFamily: 'DMSans-Medium', fontSize: 14 },
+  deleteActionCopy: { color: '#FDA4AF', fontFamily: 'DMSans-Regular', fontSize: 12 },
   cancelAction: { alignItems: 'center' as const, paddingTop: 16 },
   cancelActionLabel: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  confirmIcon: {
+    alignItems: 'center' as const,
+    alignSelf: 'center' as const,
+    backgroundColor: 'rgba(248,113,113,0.14)',
+    borderRadius: 28,
+    height: 56,
+    justifyContent: 'center' as const,
+    marginBottom: 12,
+    width: 56,
+  },
+  confirmTitle: {
+    color: colors.foreground,
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 18,
+    textAlign: 'center' as const,
+  },
+  confirmCopy: {
+    color: colors.mutedForeground,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: 'center' as const,
+  },
+  confirmEventName: { color: colors.foreground, fontFamily: 'DMSans-SemiBold' },
+  deleteError: {
+    color: '#FCA5A5',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 12,
+    marginTop: 12,
+    textAlign: 'center' as const,
+  },
+  confirmActions: { flexDirection: 'row' as const, gap: 8, marginTop: 20 },
+  confirmCancelButton: {
+    alignItems: 'center' as const,
+    borderColor: colors.border,
+    borderRadius: 22,
+    borderWidth: 1,
+    flex: 1,
+    height: 44,
+    justifyContent: 'center' as const,
+  },
+  confirmCancelLabel: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
+  confirmDeleteButton: {
+    alignItems: 'center' as const,
+    backgroundColor: '#DC2626',
+    borderRadius: 22,
+    flex: 1,
+    height: 44,
+    justifyContent: 'center' as const,
+  },
+  confirmDeleteLabel: { color: '#FFFFFF', fontFamily: 'DMSans-SemiBold', fontSize: 14 },
+  disabledButton: { opacity: 0.5 },
   state: { alignItems: 'center' as const, gap: 12, paddingVertical: 32 },
   stateText: {
     color: colors.mutedForeground,
