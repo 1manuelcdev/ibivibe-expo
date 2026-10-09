@@ -139,7 +139,7 @@ export function Toast({
       ) : null}
       {onDismiss ? (
         <Pressable accessibilityLabel="Fechar notificação" hitSlop={8} onPress={onDismiss}>
-          <Ionicons color={appearance.actionColor} name="close" size={19} />
+          <Ionicons color={colors.mutedForeground} name="close" size={19} />
         </Pressable>
       ) : null}
       {showProgress ? (
