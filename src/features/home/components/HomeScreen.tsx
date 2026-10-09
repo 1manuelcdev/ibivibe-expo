@@ -23,6 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { EventCard } from '@/components/EventCard';
+import { TagBadges } from '@/components/TagBadges';
 import { LocationSheet } from '@/features/home/components/LocationSheet';
 import type { HomeCity } from '@/features/home/models/home-types';
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
@@ -428,25 +429,8 @@ function MediaPlaceholder({
   );
 }
 
-function Badge({ label }: { label: string }) {
-  return (
-    <View style={styles.badge}>
-      <Text style={styles.badgeText}>{label}</Text>
-    </View>
-  );
-}
-
 function EntityTags({ tags }: { tags: string[] }) {
-  const [firstTag, ...remainingTags] = tags;
-
-  return (
-    <View style={styles.badgeRow}>
-      {firstTag ? <Badge label={firstTag} /> : null}
-      {remainingTags.length ? (
-        <Text style={styles.extraTags}>{`(+${remainingTags.length} tags)`}</Text>
-      ) : null}
-    </View>
-  );
+  return <TagBadges tags={tags} />;
 }
 
 function formatEventDate(startDate?: string, endDate?: string) {
@@ -596,23 +580,6 @@ const styles = {
     lineHeight: 18,
   },
   cardMeta: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  badgeRow: {
-    alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 4,
-    overflow: 'hidden' as const,
-  },
-  badge: {
-    alignSelf: 'flex-start' as const,
-    backgroundColor: '#3F3F46',
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  badgeText: { color: '#E4E4E7', fontFamily: 'DMSans-Medium', fontSize: 10 },
-  extraTags: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 10 },
   cityCard: {
     gap: 6,
     padding: 8,

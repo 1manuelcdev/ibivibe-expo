@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { TagBadges } from '@/components/TagBadges';
 import { colors } from '@/theme/tokens';
 import { normalizeImageUrl } from '@/utils/normalize-image-url';
 
@@ -46,13 +47,7 @@ export function EventCard({
           </Text>
           <Text style={styles.date}>{date}</Text>
         </View>
-        <View style={styles.badges}>
-          {tags.slice(0, 2).map((tag) => (
-            <View key={tag} style={styles.badge}>
-              <Text style={styles.badgeLabel}>{tag}</Text>
-            </View>
-          ))}
-        </View>
+        <TagBadges tags={tags} />
       </View>
     </Pressable>
   );
@@ -80,14 +75,4 @@ const styles = {
     fontSize: 16,
   },
   date: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
-  badges: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 4 },
-  badge: {
-    backgroundColor: '#27272A',
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeLabel: { color: '#F4F4F5', fontFamily: 'DMSans-Medium', fontSize: 12 },
 } as const;
