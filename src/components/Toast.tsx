@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
+import { colors } from '@/theme/tokens';
+
 export type ToastVariant = 'success' | 'info' | 'warning' | 'destructive';
 
 const toastVariants = {
@@ -15,13 +17,13 @@ const toastVariants = {
     textColor: '#FCA5A5',
   },
   info: {
-    actionColor: '#DBEAFE',
-    backgroundColor: '#1E3A8A',
-    borderColor: '#60A5FA',
+    actionColor: colors.primary,
+    backgroundColor: '#18181B',
+    borderColor: colors.border,
     icon: 'information-circle-outline' as const,
-    iconColor: '#FFFFFF',
-    progressColor: '#BFDBFE',
-    textColor: '#FFFFFF',
+    iconColor: colors.mutedForeground,
+    progressColor: colors.mutedForeground,
+    textColor: colors.foreground,
   },
   success: {
     actionColor: '#DCFCE7',
