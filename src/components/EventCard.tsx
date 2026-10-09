@@ -63,8 +63,8 @@ const styles = {
     alignItems: 'center' as const,
     flexDirection: 'row' as const,
     gap: 12,
-    minWidth: 174,
-    width: 174,
+    minWidth: 218,
+    width: 218,
   },
   fullWidth: { flex: 1, minWidth: 0, width: 'auto' as const },
   image: { backgroundColor: '#27272A', borderRadius: 8, height: 80, width: 80 },
@@ -77,9 +77,9 @@ const styles = {
   title: {
     color: '#F4F4F5',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 12,
+    fontSize: 16,
   },
-  date: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
+  date: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
   badges: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 4 },
   badge: {
     backgroundColor: '#27272A',
