@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AppBackButton } from '@/components/AppBackButton';
+import { AdminMetricsSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi, type AdminOverview } from '@/features/admin/admin-api';
 import { useSessionStore } from '@/stores/session-store';
@@ -53,10 +54,11 @@ export function AdminPanelScreen() {
             <Text style={styles.sectionTitle}>Resumo operacional</Text>
             <Text style={styles.sectionDescription}>Visão geral da plataforma.</Text>
           </View>
-          {overview.isLoading ? <ActivityIndicator color={colors.primary} size="small" /> : null}
         </View>
         {overview.isError ? (
           <OverviewError onRetry={() => overview.refetch()} />
+        ) : overview.isLoading ? (
+          <AdminMetricsSkeleton />
         ) : (
           <View style={styles.metrics}>
             {metrics.map((metric) => (

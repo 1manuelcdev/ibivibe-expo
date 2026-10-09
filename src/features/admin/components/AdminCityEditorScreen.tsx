@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { AppBackButton } from '@/components/AppBackButton';
 import { TextField } from '@/components/TextField';
 import { adminApi, type AdminCity } from '@/features/admin/admin-api';
 import { isAdminAccount } from '@/features/admin/admin-access';
+import { AdminEditorSkeleton, AdminMediaStripSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { EventTagsSheet } from '@/features/events/components/EventTagsSheet';
 import type { OnboardingTag } from '@/features/onboarding/models/onboarding-types';
 import { useSessionStore } from '@/stores/session-store';
@@ -29,7 +30,7 @@ export function AdminCityEditorScreen() {
   const city = cities.data?.find((item) => item.id === cityId);
 
   if (!isAdminAccount(account)) return null;
-  if (cities.isLoading) return <EditorState loading />;
+  if (cities.isLoading) return <AdminEditorSkeleton />;
   if (cities.isError || !city) return <EditorState error onRetry={() => cities.refetch()} />;
 
   return <CityEditorForm city={city} key={city.id} />;
@@ -169,7 +170,7 @@ function CityEditorForm({ city }: { city: AdminCity }) {
             </Pressable>
           </View>
           {medias.isLoading ? (
-            <ActivityIndicator color={colors.primary} style={styles.mediaLoading} />
+            <AdminMediaStripSkeleton />
           ) : orderedMedias.length ? (
             <ScrollView
               contentContainerStyle={styles.mediaPreviews}
@@ -233,29 +234,15 @@ function formFromCity(city: AdminCity): FormState {
   };
 }
 
-function EditorState({
-  error,
-  loading,
-  onRetry,
-}: {
-  error?: boolean;
-  loading?: boolean;
-  onRetry?: () => void;
-}) {
+function EditorState({ error, onRetry }: { error?: boolean; onRetry?: () => void }) {
   return (
     <View style={styles.state}>
-      {loading ? (
-        <ActivityIndicator color={colors.primary} />
-      ) : (
-        <>
-          <Text style={styles.stateText}>Não foi possível carregar a cidade.</Text>
-          {error && onRetry ? (
-            <Pressable onPress={onRetry}>
-              <Text style={styles.retry}>Tentar novamente</Text>
-            </Pressable>
-          ) : null}
-        </>
-      )}
+      <Text style={styles.stateText}>Não foi possível carregar a cidade.</Text>
+      {error && onRetry ? (
+        <Pressable onPress={onRetry}>
+          <Text style={styles.retry}>Tentar novamente</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -301,7 +288,6 @@ const styles = {
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
-  mediaLoading: { alignSelf: 'flex-start' as const },
   mediaPreviews: { gap: 10, paddingRight: 24 },
   mediaPreview: { height: 88, position: 'relative' as const, width: 88 },
   previewImage: { backgroundColor: '#27272A', borderRadius: 10, height: 88, width: 88 },

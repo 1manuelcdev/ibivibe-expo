@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
@@ -11,6 +11,7 @@ import { TextField } from '@/components/TextField';
 import { Toast, type ToastVariant } from '@/components/Toast';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi, type AdminTag, type TagTargetType } from '@/features/admin/admin-api';
+import { AdminEditorSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -40,7 +41,7 @@ export function AdminTagEditorScreen({ create = false }: { create?: boolean }) {
   });
 
   if (!isAdminAccount(account)) return null;
-  if (groups.isLoading || (!create && tag.isLoading)) return <EditorState loading />;
+  if (groups.isLoading || (!create && tag.isLoading)) return <AdminEditorSkeleton />;
   if (groups.isError || (!create && tag.isError) || (!create && !tag.data)) {
     return <EditorState error onRetry={() => void Promise.all([groups.refetch(), tag.refetch()])} />;
   }
@@ -218,8 +219,8 @@ function formFromTag(tag?: AdminTag): FormState {
   return { color: tag?.color ?? '', description: tag?.description ?? '', groupId: tag?.group_id ?? '', name: tag?.name ?? '', position: String(tag?.position ?? 0), targets: tag?.targets?.map((target) => target.target_type) ?? [] };
 }
 
-function EditorState({ error, loading, onRetry }: { error?: boolean; loading?: boolean; onRetry?: () => void }) {
-  return <View style={styles.state}>{loading ? <ActivityIndicator color={colors.primary} /> : <Text style={styles.stateText}>Não foi possível carregar a tag.</Text>}{error && onRetry ? <Pressable onPress={onRetry}><Text style={styles.retry}>Tentar novamente</Text></Pressable> : null}</View>;
+function EditorState({ error, onRetry }: { error?: boolean; onRetry?: () => void }) {
+  return <View style={styles.state}><Text style={styles.stateText}>Não foi possível carregar a tag.</Text>{error && onRetry ? <Pressable onPress={onRetry}><Text style={styles.retry}>Tentar novamente</Text></Pressable> : null}</View>;
 }
 
 const styles = {

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
@@ -11,6 +11,7 @@ import { TextField } from '@/components/TextField';
 import { Toast, type ToastVariant } from '@/components/Toast';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi, type AdminTagGroup } from '@/features/admin/admin-api';
+import { AdminListSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
@@ -113,7 +114,7 @@ export function AdminTagsScreen() {
           Atualize as informações das tags já cadastradas.
         </Text>
         <TextField onChangeText={setSearch} placeholder="Buscar tag ou grupo" value={search} />
-        {groupsQuery.isLoading ? <ActivityIndicator color={colors.primary} /> : null}
+        {groupsQuery.isLoading ? <AdminListSkeleton rows={4} /> : null}
         {groupsQuery.isError ? <State text="Não foi possível carregar as tags." onPress={() => groupsQuery.refetch()} /> : null}
         {!groupsQuery.isLoading && !groupsQuery.isError && !groups.length ? (
           <State text={search ? 'Nenhuma tag encontrada.' : 'Nenhuma tag disponível.'} />

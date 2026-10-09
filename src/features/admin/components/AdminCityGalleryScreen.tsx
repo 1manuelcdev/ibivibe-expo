@@ -15,6 +15,7 @@ import {
   prepareImageForUpload,
 } from '@/features/businesses/image-upload-service';
 import { isAdminAccount } from '@/features/admin/admin-access';
+import { AdminGallerySkeleton } from '@/features/admin/components/AdminSkeleton';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 import { normalizeImageUrl } from '@/utils/normalize-image-url';
@@ -136,7 +137,7 @@ export function AdminCityGalleryScreen() {
   }
 
   if (!isAdminAccount(account)) return null;
-  if (gallery.isLoading) return <GalleryState loading />;
+  if (gallery.isLoading) return <AdminGallerySkeleton />;
   if (gallery.isError) return <GalleryState error onRetry={() => gallery.refetch()} />;
 
   return (
@@ -292,29 +293,15 @@ function MediaCard({
   );
 }
 
-function GalleryState({
-  error,
-  loading,
-  onRetry,
-}: {
-  error?: boolean;
-  loading?: boolean;
-  onRetry?: () => void;
-}) {
+function GalleryState({ error, onRetry }: { error?: boolean; onRetry?: () => void }) {
   return (
     <View style={styles.state}>
-      {loading ? (
-        <ActivityIndicator color={colors.primary} />
-      ) : (
-        <>
-          <Text style={styles.stateText}>Não foi possível carregar as mídias.</Text>
-          {error && onRetry ? (
-            <Pressable onPress={onRetry}>
-              <Text style={styles.retry}>Tentar novamente</Text>
-            </Pressable>
-          ) : null}
-        </>
-      )}
+      <Text style={styles.stateText}>Não foi possível carregar as mídias.</Text>
+      {error && onRetry ? (
+        <Pressable onPress={onRetry}>
+          <Text style={styles.retry}>Tentar novamente</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

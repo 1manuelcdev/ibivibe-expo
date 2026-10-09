@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AppBackButton } from '@/components/AppBackButton';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi } from '@/features/admin/admin-api';
+import { AdminListSkeleton } from '@/features/admin/components/AdminSkeleton';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 import { TextField } from '@/components/TextField';
@@ -33,11 +34,8 @@ export function AdminCitiesScreen() {
           <AppBackButton fallbackHref="/(app)/admin" />
           <Text style={styles.title}>Editar cidades</Text>
         </View>
-        <Text style={styles.description}>
-          Selecione uma cidade para gerenciar suas informações.
-        </Text>
         <TextField onChangeText={setSearch} placeholder="Buscar cidade" value={search} />
-        {cities.isLoading ? <ActivityIndicator color={colors.primary} /> : null}
+        {cities.isLoading ? <AdminListSkeleton /> : null}
         {cities.isError ? (
           <State text="Não foi possível carregar as cidades." onPress={() => cities.refetch()} />
         ) : null}
@@ -79,7 +77,6 @@ const styles = {
   content: { gap: 18, padding: 24, paddingBottom: 40 },
   header: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 16 },
   title: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 20 },
-  description: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
   city: {
     alignItems: 'center' as const,
     borderBottomColor: colors.border,
