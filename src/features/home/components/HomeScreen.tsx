@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -113,7 +112,7 @@ export function HomeScreen() {
           <Ionicons color={colors.mutedForeground} name="search-outline" size={20} />
           <Text style={styles.searchText}>O que vamos fazer hoje na Ibiapaba?</Text>
         </Pressable>
-        <SponsoredHighlights cities={citiesQuery.data ?? []} />
+        {citiesQuery.isLoading ? <HomeBannerSkeleton /> : <SponsoredHighlights cities={citiesQuery.data ?? []} />}
         <Categories />
         <Section title="Eventos acontecendo perto" onSeeAll={() => router.push('/(app)/events')}>
           <HomeSectionState query={eventsQuery} emptyText="Nenhum evento disponível agora.">
@@ -310,8 +309,7 @@ function HomeSectionState({
   emptyText: string;
   query: { isError: boolean; isLoading: boolean; refetch: () => void };
 }) {
-  if (query.isLoading)
-    return <ActivityIndicator color={colors.primary} style={styles.sectionState} />;
+  if (query.isLoading) return <HomeCardsSkeleton />;
   if (query.isError) {
     return (
       <Pressable onPress={query.refetch} style={styles.sectionState}>
@@ -323,6 +321,26 @@ function HomeSectionState({
   }
   if (!children) return <Text style={styles.sectionStateText}>{emptyText}</Text>;
   return <>{children}</>;
+}
+
+function HomeBannerSkeleton() {
+  return <View style={[styles.skeleton, styles.bannerSkeleton]} />;
+}
+
+function HomeCardsSkeleton() {
+  return (
+    <View style={styles.skeletonCards}>
+      {Array.from({ length: 3 }, (_, index) => (
+        <View key={index} style={styles.skeletonCard}>
+          <View style={[styles.skeleton, styles.skeletonImage]} />
+          <View style={styles.skeletonCardContent}>
+            <View style={[styles.skeleton, styles.skeletonTitle]} />
+            <View style={[styles.skeleton, styles.skeletonMeta]} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 function Categories() {
@@ -586,6 +604,14 @@ const styles = {
   horizontalCards: { gap: 12 },
   sectionState: { alignSelf: 'flex-start' as const, paddingVertical: 12 },
   sectionStateText: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
+  skeleton: { backgroundColor: '#27272A', borderRadius: 12 },
+  bannerSkeleton: { height: 226, width: '100%' as const },
+  skeletonCards: { flexDirection: 'row' as const, gap: 12, overflow: 'hidden' as const },
+  skeletonCard: { backgroundColor: '#18181B', borderRadius: 12, gap: 10, padding: 8, width: 212 },
+  skeletonImage: { height: 100, width: '100%' as const },
+  skeletonCardContent: { gap: 7, paddingBottom: 2 },
+  skeletonTitle: { height: 14, width: '72%' as const },
+  skeletonMeta: { height: 10, width: '48%' as const },
   horizontalCard: {
     borderRadius: 12,
     flexDirection: 'row' as const,
