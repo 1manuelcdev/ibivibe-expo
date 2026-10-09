@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import { getApiErrorMessage } from '@/api/client';
+import { ActionModal, ActionModalItem } from '@/components/ActionModal';
 import { eventApi } from '@/features/events/event-api';
 import { useEventDraftStore } from '@/features/events/event-draft-store';
 import type { Event } from '@/features/events/models/event-types';
@@ -211,43 +212,26 @@ function EventOptionsModal({
   onEdit: () => void;
 }) {
   return (
-    <Modal animationType="fade" onRequestClose={onClose} transparent visible={Boolean(event)}>
-      <Pressable onPress={onClose} style={styles.modalOverlay}>
-        <Pressable onPress={() => undefined} style={styles.optionsCard}>
-          <View style={styles.optionsHeader}>
-            <View style={styles.optionsHeading}>
-              <Text numberOfLines={1} style={styles.optionsTitle}>
-                {event?.name}
-              </Text>
-              <Text style={styles.optionsCopy}>Gerencie este evento</Text>
-            </View>
-            <Pressable accessibilityLabel="Fechar opções" hitSlop={8} onPress={onClose}>
-              <Ionicons color={colors.mutedForeground} name="close" size={21} />
-            </Pressable>
-          </View>
-          <Pressable onPress={onEdit} style={styles.optionAction}>
-            <View style={styles.optionActionIcon}>
-              <Ionicons color={colors.foreground} name="create-outline" size={19} />
-            </View>
-            <View style={styles.optionActionText}>
-              <Text style={styles.optionActionTitle}>Editar evento</Text>
-              <Text style={styles.optionActionCopy}>Altere dados, tags e mídias</Text>
-            </View>
-            <Ionicons color={colors.mutedForeground} name="chevron-forward" size={18} />
-          </Pressable>
-          <Pressable onPress={onDelete} style={styles.deleteAction}>
-            <View style={styles.deleteActionIcon}>
-              <Ionicons color="#FCA5A5" name="trash-outline" size={19} />
-            </View>
-            <View style={styles.optionActionText}>
-              <Text style={styles.deleteActionTitle}>Excluir evento</Text>
-              <Text style={styles.deleteActionCopy}>Essa ação não pode ser desfeita</Text>
-            </View>
-            <Ionicons color="#FCA5A5" name="chevron-forward" size={18} />
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <ActionModal
+      description="Gerencie este evento"
+      onClose={onClose}
+      title={event?.name ?? ''}
+      visible={Boolean(event)}
+    >
+      <ActionModalItem
+        description="Altere dados, tags e mídias"
+        icon="create-outline"
+        onPress={onEdit}
+        title="Editar evento"
+      />
+      <ActionModalItem
+        description="Essa ação não pode ser desfeita"
+        destructive
+        icon="trash-outline"
+        onPress={onDelete}
+        title="Excluir evento"
+      />
+    </ActionModal>
   );
 }
 
@@ -265,38 +249,26 @@ function DeleteEventModal({
   onConfirm: () => void;
 }) {
   return (
-    <Modal animationType="fade" onRequestClose={onCancel} transparent visible={Boolean(event)}>
-      <Pressable onPress={onCancel} style={styles.modalOverlay}>
-        <Pressable
-          onPress={(pressEvent) => pressEvent.stopPropagation()}
-          style={styles.optionsCard}
-        >
-          <View style={styles.confirmIcon}>
-            <Ionicons color="#FCA5A5" name="trash-outline" size={24} />
-          </View>
-          <Text style={styles.confirmTitle}>Excluir evento?</Text>
-          <Text style={styles.confirmCopy}>
-            O evento <Text style={styles.confirmEventName}>{event?.name}</Text> será removido
-            permanentemente.
-          </Text>
-          {error ? <Text style={styles.deleteError}>{error}</Text> : null}
-          <View style={styles.confirmActions}>
-            <Pressable disabled={isDeleting} onPress={onCancel} style={styles.confirmCancelButton}>
-              <Text style={styles.confirmCancelLabel}>Cancelar</Text>
-            </Pressable>
-            <Pressable
-              disabled={isDeleting}
-              onPress={onConfirm}
-              style={[styles.confirmDeleteButton, isDeleting && styles.disabledButton]}
-            >
-              <Text style={styles.confirmDeleteLabel}>
-                {isDeleting ? 'Excluindo...' : 'Excluir'}
-              </Text>
-            </Pressable>
-          </View>
+    <ActionModal
+      description={`O evento ${event?.name ?? ''} será removido permanentemente.`}
+      onClose={onCancel}
+      title="Excluir evento?"
+      visible={Boolean(event)}
+    >
+      {error ? <Text style={styles.deleteError}>{error}</Text> : null}
+      <View style={styles.confirmActions}>
+        <Pressable disabled={isDeleting} onPress={onCancel} style={styles.confirmCancelButton}>
+          <Text style={styles.confirmCancelLabel}>Cancelar</Text>
         </Pressable>
-      </Pressable>
-    </Modal>
+        <Pressable
+          disabled={isDeleting}
+          onPress={onConfirm}
+          style={[styles.confirmDeleteButton, isDeleting && styles.disabledButton]}
+        >
+          <Text style={styles.confirmDeleteLabel}>{isDeleting ? 'Excluindo...' : 'Excluir'}</Text>
+        </Pressable>
+      </View>
+    </ActionModal>
   );
 }
 
@@ -389,90 +361,6 @@ const styles = {
     justifyContent: 'center' as const,
     width: 32,
   },
-  modalOverlay: {
-    alignItems: 'center' as const,
-    backgroundColor: 'rgba(0,0,0,0.62)',
-    flex: 1,
-    justifyContent: 'center' as const,
-    padding: 24,
-  },
-  optionsCard: {
-    backgroundColor: '#18181B',
-    borderRadius: 20,
-    maxWidth: 420,
-    padding: 16,
-    width: '100%' as const,
-  },
-  optionsHeader: { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 10 },
-  optionsHeading: { flex: 1, gap: 2, minWidth: 0 },
-  optionsTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
-  optionsCopy: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  optionAction: {
-    alignItems: 'center' as const,
-    backgroundColor: '#27272A',
-    borderRadius: 12,
-    flexDirection: 'row' as const,
-    gap: 10,
-    marginTop: 20,
-    padding: 12,
-  },
-  optionActionIcon: {
-    alignItems: 'center' as const,
-    backgroundColor: 'transparent',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center' as const,
-    width: 32,
-  },
-  optionActionText: { flex: 1, gap: 2 },
-  optionActionTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 14 },
-  optionActionCopy: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  deleteAction: {
-    alignItems: 'center' as const,
-    backgroundColor: 'rgba(127,29,29,0.16)',
-    borderColor: 'rgba(248,113,113,0.22)',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row' as const,
-    gap: 10,
-    marginTop: 8,
-    padding: 12,
-  },
-  deleteActionIcon: {
-    alignItems: 'center' as const,
-    backgroundColor: 'transparent',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center' as const,
-    width: 32,
-  },
-  deleteActionTitle: { color: '#FCA5A5', fontFamily: 'DMSans-Medium', fontSize: 14 },
-  deleteActionCopy: { color: '#FDA4AF', fontFamily: 'DMSans-Regular', fontSize: 12 },
-  confirmIcon: {
-    alignItems: 'center' as const,
-    alignSelf: 'center' as const,
-    backgroundColor: 'rgba(248,113,113,0.14)',
-    borderRadius: 28,
-    height: 56,
-    justifyContent: 'center' as const,
-    marginBottom: 12,
-    width: 56,
-  },
-  confirmTitle: {
-    color: colors.foreground,
-    fontFamily: 'DMSans-SemiBold',
-    fontSize: 18,
-    textAlign: 'center' as const,
-  },
-  confirmCopy: {
-    color: colors.mutedForeground,
-    fontFamily: 'DMSans-Regular',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
-    textAlign: 'center' as const,
-  },
-  confirmEventName: { color: colors.foreground, fontFamily: 'DMSans-SemiBold' },
   deleteError: {
     color: '#FCA5A5',
     fontFamily: 'DMSans-Regular',
