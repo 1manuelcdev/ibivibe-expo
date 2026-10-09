@@ -6,6 +6,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'rea
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
 import { useFavoritesViewModel } from '@/features/favorites/viewmodels/useFavoritesViewModel';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { useEntityCoverUrls } from '@/features/medias/useEntityCoverUrls';
 import { colors } from '@/theme/tokens';
 
 type FavoriteTab = 'cities' | 'businesses' | 'events';
@@ -29,6 +30,14 @@ export function FavoritesScreen() {
         ? home.businesses.data
         : home.events.data;
   const selected = source?.filter((item) => ids.has(item.id)) ?? [];
+  const cityCoverUrls = useEntityCoverUrls(
+    'city',
+    tab === 'cities' ? selected.map((item) => item.id) : [],
+  );
+  const eventCoverUrls = useEntityCoverUrls(
+    'event',
+    tab === 'events' ? selected.map((item) => item.id) : [],
+  );
 
   return (
     <View style={styles.screen}>
@@ -70,9 +79,9 @@ export function FavoritesScreen() {
             const image =
               'avatar_url' in item
                 ? item.avatar_url
-                : 'cover_img_url' in item
-                  ? item.cover_img_url
-                  : null;
+                : tab === 'cities'
+                  ? cityCoverUrls.get(item.id)
+                  : eventCoverUrls.get(item.id);
             return (
               <Pressable
                 key={item.id}
@@ -86,10 +95,7 @@ export function FavoritesScreen() {
                   />
                 ) : (
                   <View
-                    style={[
-                      styles.coverFallback,
-                      tab === 'businesses' && styles.businessAvatar,
-                    ]}
+                    style={[styles.coverFallback, tab === 'businesses' && styles.businessAvatar]}
                   >
                     <Ionicons color={colors.mutedForeground} name={favoriteIcons[tab]} size={24} />
                   </View>

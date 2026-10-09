@@ -27,6 +27,7 @@ import { TagBadges } from '@/components/TagBadges';
 import { LocationSheet } from '@/features/home/components/LocationSheet';
 import type { HomeCity } from '@/features/home/models/home-types';
 import { useHomeViewModel } from '@/features/home/viewmodels/useHomeViewModel';
+import { useEntityCoverUrls } from '@/features/medias/useEntityCoverUrls';
 import { colors, radius } from '@/theme/tokens';
 import { normalizeImageUrl } from '@/utils/normalize-image-url';
 
@@ -55,12 +56,13 @@ export function HomeScreen() {
     cities: citiesQuery,
     events: eventsQuery,
   } = useHomeViewModel();
+  const cityCoverUrls = useEntityCoverUrls('city', citiesQuery.data?.map((city) => city.id) ?? []);
   const eventItems = eventsQuery.data?.slice(0, 3).map((event) => ({
     id: event.id,
     title: event.name,
     date: formatEventDate(event.start_date, event.end_date),
     tags: event.tags?.slice(0, 3).map((tag) => tag.name) ?? ['Evento'],
-    image: event.cover_img_url ?? event.medias?.find((media) => media.is_cover)?.url,
+    image: event.medias?.find((media) => media.is_cover)?.url,
   }));
   const businessItems = businessesQuery.data?.slice(0, 5).map((business) => ({
     id: business.id,
@@ -72,7 +74,7 @@ export function HomeScreen() {
     id: city.id,
     title: city.name,
     tags: city.tags?.slice(0, 2) ?? ['Ibiapaba'],
-    image: city.cover_img_url,
+    image: cityCoverUrls.get(city.id),
   }));
 
   return (
@@ -190,6 +192,10 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
   const { width } = useWindowDimensions();
   const carouselWidth = width - 32;
   const items = cities.slice(0, 5);
+  const cityCoverUrls = useEntityCoverUrls(
+    'city',
+    items.map((city) => city.id),
+  );
   const currentIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
 
   useEffect(() => {
@@ -244,7 +250,7 @@ function SponsoredHighlights({ cities }: { cities: HomeCity[] }) {
           >
             <RemoteImage
               icon={fallbackImages.city}
-              source={city.cover_img_url}
+              source={cityCoverUrls.get(city.id)}
               style={styles.banner}
             />
             <View style={styles.bannerOverlay}>

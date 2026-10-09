@@ -75,10 +75,8 @@ export function EntityDetailScreen({
     kind === 'business'
       ? ((data as BusinessDetail).media?.[0]?.url ?? (data as BusinessDetail).avatar_url)
       : kind === 'city'
-        ? ((data as CityDetail).media?.[0]?.url ?? (data as CityDetail).cover_img_url)
-        : ((data as EventDetail).medias?.find((media) => media.is_cover)?.url ??
-          (data as EventDetail).medias?.[0]?.url ??
-          (data as EventDetail).cover_img_url);
+        ? (data as CityDetail).media?.find((media) => media.is_cover)?.url
+        : (data as EventDetail).medias?.find((media) => media.is_cover)?.url;
   const tags = ((data as CityDetail | EventDetail | BusinessDetail).tags ?? []).map((tag) =>
     typeof tag === 'string' ? tag : tag.name,
   );

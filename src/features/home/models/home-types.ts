@@ -5,7 +5,6 @@ export type HomeEvent = {
   cities?: Event['cities'];
   id: string;
   name: string;
-  cover_img_url?: string | null;
   medias?: Event['medias'];
   reach_level?: Event['reach_level'];
   start_date?: string;
@@ -26,6 +25,5 @@ export type HomeBusiness = {
 export type HomeCity = {
   id: string;
   name: string;
-  cover_img_url?: string | null;
   tags?: string[];
 };

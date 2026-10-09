@@ -1,10 +1,15 @@
 const legacyCdnPathPattern = /^\/(cities|businesses|events|users)\//;
+const legacyCdnBaseUrl = 'https://cdn.ibivibe.com.br';
 
 export function normalizeImageUrl(value?: string | null) {
   const url = value?.trim();
 
   if (!url) return null;
-  const normalizedProtocolUrl = url.startsWith('//') ? `https:${url}` : url;
+  const normalizedProtocolUrl = url.startsWith('//')
+    ? `https:${url}`
+    : legacyCdnPathPattern.test(url)
+      ? `${legacyCdnBaseUrl}${url}`
+      : url;
 
   if (
     !normalizedProtocolUrl.startsWith('http://') &&

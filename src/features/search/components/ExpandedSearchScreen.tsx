@@ -5,6 +5,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'rea
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { TextField } from '@/components/TextField';
+import { useEntityCoverUrls } from '@/features/medias/useEntityCoverUrls';
 import { useRecentSearchStore } from '@/features/search/stores/recent-search-store';
 import { useSearchViewModel } from '@/features/search/viewmodels/useSearchViewModel';
 import { colors } from '@/theme/tokens';
@@ -114,6 +115,15 @@ function Results({
 }: {
   data: NonNullable<ReturnType<typeof useSearchViewModel>['search']['data']>;
 }) {
+  const cityCoverUrls = useEntityCoverUrls(
+    'city',
+    data.cities.map((city) => city.id),
+  );
+  const eventCoverUrls = useEntityCoverUrls(
+    'event',
+    data.events.map((event) => event.id),
+  );
+
   return (
     <View style={styles.section}>
       <ResultGroup
@@ -122,7 +132,7 @@ function Results({
         items={data.cities.map((item) => ({
           description: item.description,
           id: item.id,
-          image: item.cover_img_url,
+          image: cityCoverUrls.get(item.id),
           title: item.name,
         }))}
       />
@@ -142,7 +152,7 @@ function Results({
         items={data.events.map((item) => ({
           description: item.description,
           id: item.id,
-          image: item.cover_img_url,
+          image: eventCoverUrls.get(item.id),
           title: item.name,
         }))}
       />

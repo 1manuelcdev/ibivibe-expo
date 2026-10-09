@@ -2,7 +2,6 @@ export type SearchCity = {
   id: string;
   name: string;
   description?: string | null;
-  cover_img_url?: string | null;
 };
 
 export type SearchBusiness = {
@@ -17,7 +16,6 @@ export type SearchEvent = {
   id: string;
   name: string;
   description?: string | null;
-  cover_img_url?: string | null;
 };
 
 export type SearchResponse = {
