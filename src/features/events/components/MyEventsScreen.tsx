@@ -249,9 +249,6 @@ function EventOptionsModal({
             </View>
             <Ionicons color="#FCA5A5" name="chevron-forward" size={18} />
           </Pressable>
-          <Pressable onPress={onClose} style={styles.cancelAction}>
-            <Text style={styles.cancelActionLabel}>Cancelar</Text>
-          </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
@@ -405,9 +402,7 @@ const styles = {
   },
   optionsCard: {
     backgroundColor: '#18181B',
-    borderColor: colors.border,
     borderRadius: 20,
-    borderWidth: 1,
     maxWidth: 420,
     padding: 16,
     width: '100%' as const,
@@ -465,8 +460,6 @@ const styles = {
   },
   deleteActionTitle: { color: '#FCA5A5', fontFamily: 'DMSans-Medium', fontSize: 14 },
   deleteActionCopy: { color: '#FDA4AF', fontFamily: 'DMSans-Regular', fontSize: 12 },
-  cancelAction: { alignItems: 'center' as const, paddingTop: 16 },
-  cancelActionLabel: { color: colors.mutedForeground, fontFamily: 'DMSans-Medium', fontSize: 14 },
   confirmIcon: {
     alignItems: 'center' as const,
     alignSelf: 'center' as const,
