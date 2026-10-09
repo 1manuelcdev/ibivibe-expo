@@ -70,25 +70,29 @@ export function AdminPanelScreen() {
           <Pressable
             accessibilityHint="Abre a gestão de cidades"
             accessibilityRole="button"
-            onPress={() => router.push('/(app)/admin/cities')}
-            style={({ pressed }) => [styles.action, pressed && styles.pressed]}
-          >
-            <Ionicons color={colors.foreground} name="location-outline" size={22} />
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Editar cidades</Text>
-              <Text style={styles.actionDescription}>Informações, tags e mídias.</Text>
+          onPress={() => router.push('/(app)/admin/cities')}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <View style={styles.actionIcon}>
+            <Ionicons color={colors.primary} name="location-outline" size={21} />
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Cidades</Text>
+            <Text style={styles.actionDescription}>Informações, tags e mídias.</Text>
             </View>
             <Ionicons color={colors.mutedForeground} name="chevron-forward" size={20} />
           </Pressable>
           <Pressable
             accessibilityHint="Abre a gestão de tags"
             accessibilityRole="button"
-            onPress={() => router.push('/(app)/admin/tags')}
-            style={({ pressed }) => [styles.action, pressed && styles.pressed]}
-          >
-            <Ionicons color={colors.foreground} name="pricetags-outline" size={22} />
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Editar tags</Text>
+          onPress={() => router.push('/(app)/admin/tags')}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <View style={styles.actionIcon}>
+            <Ionicons color={colors.primary} name="pricetags-outline" size={21} />
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Tags</Text>
               <Text style={styles.actionDescription}>Nome, descrição, cor e ordem.</Text>
             </View>
             <Ionicons color={colors.mutedForeground} name="chevron-forward" size={20} />
@@ -159,20 +163,27 @@ const styles = {
   },
   metricValue: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 20 },
   metricLabel: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
-  actionsSection: { gap: 10 },
+  actionsSection: { gap: 8 },
   action: {
     alignItems: 'center' as const,
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
+    backgroundColor: '#18181B',
+    borderRadius: 14,
     flexDirection: 'row' as const,
     gap: 12,
-    minHeight: 70,
+    minHeight: 76,
+    padding: 12,
+  },
+  actionIcon: {
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(159, 255, 139, 0.12)',
+    borderRadius: 12,
+    height: 42,
+    justifyContent: 'center' as const,
+    width: 42,
   },
   actionContent: { flex: 1, gap: 3 },
-  actionTitle: { color: colors.foreground, fontFamily: 'DMSans-Medium', fontSize: 16 },
-  actionDescription: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 13 },
+  actionTitle: { color: colors.foreground, fontFamily: 'DMSans-SemiBold', fontSize: 16 },
+  actionDescription: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 12 },
   error: { alignItems: 'flex-start' as const, gap: 8, paddingVertical: 8 },
   errorText: { color: colors.mutedForeground, fontFamily: 'DMSans-Regular', fontSize: 14 },
   retryLabel: { color: colors.primary, fontFamily: 'DMSans-Medium', fontSize: 14, paddingVertical: 4 },
