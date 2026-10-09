@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Animated, PanResponder, Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
 
@@ -50,6 +50,7 @@ export function Toast({
   duration = 3000,
   message,
   onAction,
+  onDismiss,
   showProgress = false,
   variant = 'info',
   visible,
@@ -58,12 +59,43 @@ export function Toast({
   duration?: number;
   message: string;
   onAction?: () => void;
+  onDismiss?: () => void;
   showProgress?: boolean;
   variant?: ToastVariant;
   visible: boolean;
 }) {
   const [progress] = useState(() => new Animated.Value(1));
+  const [translateX] = useState(() => new Animated.Value(0));
+  const { width } = useWindowDimensions();
   const appearance = toastVariants[variant];
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderMove: (_, gesture) => translateX.setValue(gesture.dx),
+        onPanResponderRelease: (_, gesture) => {
+          if (Math.abs(gesture.dx) > 80 || Math.abs(gesture.vx) > 0.8) {
+            const direction = gesture.dx >= 0 ? 1 : -1;
+            Animated.timing(translateX, {
+              duration: 180,
+              toValue: direction * width,
+              useNativeDriver: true,
+            }).start(({ finished }) => {
+              if (finished) onDismiss?.();
+            });
+            return;
+          }
+
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        },
+      }),
+    [onDismiss, translateX, width],
+  );
 
   useEffect(() => {
     progress.stopAnimation();
@@ -81,13 +113,20 @@ export function Toast({
     return () => animation.stop();
   }, [duration, message, progress, showProgress, visible]);
 
+  useEffect(() => {
+    translateX.stopAnimation();
+    translateX.setValue(0);
+  }, [message, translateX, visible]);
+
   if (!visible) return null;
 
   return (
-    <View
+    <Animated.View
       accessibilityLiveRegion="polite"
+      {...panResponder.panHandlers}
       style={[
         styles.toast,
+        { transform: [{ translateX }] },
         { backgroundColor: appearance.backgroundColor, borderColor: appearance.borderColor },
       ]}
     >
@@ -96,6 +135,11 @@ export function Toast({
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} style={styles.action}>
           <Text style={[styles.actionLabel, { color: appearance.actionColor }]}>{actionLabel}</Text>
+        </Pressable>
+      ) : null}
+      {onDismiss ? (
+        <Pressable accessibilityLabel="Fechar notificação" hitSlop={8} onPress={onDismiss}>
+          <Ionicons color={appearance.actionColor} name="close" size={19} />
         </Pressable>
       ) : null}
       {showProgress ? (
@@ -109,7 +153,7 @@ export function Toast({
           />
         </View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 

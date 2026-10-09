@@ -88,6 +88,11 @@ export function MyEventsScreen() {
     toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
   }
 
+  function dismissToast() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMessage(null);
+  }
+
   function scheduleDeletion(event: Event) {
     const currentEvents = queryClient.getQueryData<Event[]>(['my-events']) ?? [];
     const index = currentEvents.findIndex((item) => item.id === event.id);
@@ -257,6 +262,7 @@ export function MyEventsScreen() {
         duration={pendingDeletion ? 5000 : 3000}
         message={toastMessage ?? ''}
         onAction={undoDeletion}
+        onDismiss={dismissToast}
         showProgress={Boolean(pendingDeletion)}
         variant={toastVariant}
         visible={Boolean(toastMessage)}
