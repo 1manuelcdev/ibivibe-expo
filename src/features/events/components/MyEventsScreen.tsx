@@ -2,16 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
+import { Toast } from '@/components/Toast';
 import { eventApi } from '@/features/events/event-api';
 import { useEventDraftStore } from '@/features/events/event-draft-store';
 import type { Event } from '@/features/events/models/event-types';
 import { colors } from '@/theme/tokens';
 
 type EventCategory = 'all' | 'active' | 'past' | 'inactive' | 'draft';
+type PendingDeletion = { event: Event; index: number };
 
 const eventCategories: { key: EventCategory; label: string }[] = [
   { key: 'all', label: 'Todos' },
@@ -22,12 +24,16 @@ const eventCategories: { key: EventCategory; label: string }[] = [
 ];
 
 export function MyEventsScreen() {
+  const deletionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [optionsEvent, setOptionsEvent] = useState<Event | null>(null);
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory>('all');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const query = useQuery({
     queryFn: eventApi.getOwned,
     queryKey: ['my-events'],
@@ -54,13 +60,64 @@ export function MyEventsScreen() {
   );
   const remove = useMutation({
     mutationFn: (eventId: string) => eventApi.remove(eventId),
-    onError: (error) => setDeleteError(getApiErrorMessage(error)),
+    onError: async (error) => {
+      await queryClient.invalidateQueries({ queryKey: ['my-events'] });
+      setToastMessage(getApiErrorMessage(error));
+      setToastTimer();
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['my-events'] });
-      setDeleteEvent(null);
-      setDeleteError(null);
+      setToastMessage('Evento excluído.');
+      setToastTimer();
     },
   });
+
+  useEffect(
+    () => () => {
+      if (deletionTimer.current) clearTimeout(deletionTimer.current);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
+
+  function setToastTimer() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  }
+
+  function scheduleDeletion(event: Event) {
+    const currentEvents = queryClient.getQueryData<Event[]>(['my-events']) ?? [];
+    const index = currentEvents.findIndex((item) => item.id === event.id);
+
+    queryClient.setQueryData<Event[]>(['my-events'], (cachedEvents = []) =>
+      cachedEvents.filter((item) => item.id !== event.id),
+    );
+    setPendingDeletion({ event, index: index < 0 ? currentEvents.length : index });
+    setToastMessage('Evento será excluído.');
+
+    if (deletionTimer.current) clearTimeout(deletionTimer.current);
+    deletionTimer.current = setTimeout(() => {
+      setPendingDeletion(null);
+      setToastMessage('Excluindo evento...');
+      remove.mutate(event.id);
+    }, 5000);
+  }
+
+  function undoDeletion() {
+    if (!pendingDeletion) return;
+
+    if (deletionTimer.current) clearTimeout(deletionTimer.current);
+    queryClient.setQueryData<Event[]>(['my-events'], (cachedEvents = []) => {
+      if (cachedEvents.some((event) => event.id === pendingDeletion.event.id)) return cachedEvents;
+
+      const restoredEvents = [...cachedEvents];
+      restoredEvents.splice(pendingDeletion.index, 0, pendingDeletion.event);
+      return restoredEvents;
+    });
+    setPendingDeletion(null);
+    setToastMessage('Exclusão desfeita.');
+    setToastTimer();
+  }
 
   return (
     <View style={styles.screen}>
@@ -182,8 +239,19 @@ export function MyEventsScreen() {
           }
         }}
         onConfirm={() => {
-          if (deleteEvent) remove.mutate(deleteEvent.id);
+          if (deleteEvent) {
+            const event = deleteEvent;
+            setDeleteEvent(null);
+            setDeleteError(null);
+            scheduleDeletion(event);
+          }
         }}
+      />
+      <Toast
+        actionLabel={pendingDeletion ? 'Desfazer' : undefined}
+        message={toastMessage ?? ''}
+        onAction={undoDeletion}
+        visible={Boolean(toastMessage)}
       />
     </View>
   );
