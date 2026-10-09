@@ -1,19 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
 import { AppBackButton } from '@/components/AppBackButton';
 import { TextField } from '@/components/TextField';
+import { Toast, type ToastVariant } from '@/components/Toast';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi, type AdminTagGroup } from '@/features/admin/admin-api';
 import { useSessionStore } from '@/stores/session-store';
 import { colors } from '@/theme/tokens';
 
 export function AdminTagsScreen() {
+  const deletionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const account = useSessionStore((state) => state.account);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -21,7 +24,10 @@ export function AdminTagsScreen() {
   const [groupToDelete, setGroupToDelete] = useState<AdminTagGroup | null>(null);
   const [groupOptions, setGroupOptions] = useState<AdminTagGroup | null>(null);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [pendingDeletion, setPendingDeletion] = useState<AdminTagGroup | null>(null);
   const [search, setSearch] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<ToastVariant>('info');
   const groupsQuery = useQuery({ queryFn: adminApi.getTagGroups, queryKey: ['admin', 'tag-groups'] });
   const groups = useMemo(() => {
     const term = search.trim().toLocaleLowerCase('pt-BR');
@@ -35,18 +41,59 @@ export function AdminTagsScreen() {
   const hasSearch = Boolean(search.trim());
   const removeGroup = useMutation({
     mutationFn: (groupId: string) => adminApi.deleteTagGroup(groupId),
-    onError: (error) => Alert.alert('Não foi possível excluir o grupo', getApiErrorMessage(error)),
+    onError: (error) => {
+      setToastVariant('destructive');
+      setToastMessage(getApiErrorMessage(error));
+      setToastTimer();
+    },
     onSuccess: async () => {
-      setGroupToDelete(null);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'tag-groups'] });
+      setToastVariant('success');
+      setToastMessage('Grupo excluído.');
+      setToastTimer();
     },
   });
+  useEffect(
+    () => () => {
+      if (deletionTimer.current) clearTimeout(deletionTimer.current);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
   const toggleGroup = (groupId: string) =>
     setOpenGroups((current) =>
       current.includes(groupId)
         ? current.filter((id) => id !== groupId)
         : [...current, groupId],
     );
+  function setToastTimer() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  }
+  function dismissToast() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMessage(null);
+  }
+  function scheduleDeletion(group: AdminTagGroup) {
+    if (deletionTimer.current) clearTimeout(deletionTimer.current);
+    setGroupToDelete(null);
+    setPendingDeletion(group);
+    setToastVariant('destructive');
+    setToastMessage('Grupo será excluído.');
+    deletionTimer.current = setTimeout(() => {
+      setPendingDeletion(null);
+      setToastMessage('Excluindo grupo...');
+      removeGroup.mutate(group.id);
+    }, 5000);
+  }
+  function undoDeletion() {
+    if (!pendingDeletion) return;
+    if (deletionTimer.current) clearTimeout(deletionTimer.current);
+    setPendingDeletion(null);
+    setToastVariant('info');
+    setToastMessage('Exclusão desfeita.');
+    setToastTimer();
+  }
 
   if (!isAdminAccount(account)) return null;
 
@@ -178,10 +225,20 @@ export function AdminTagsScreen() {
           destructive
           disabled={removeGroup.isPending}
           icon="trash-outline"
-          onPress={() => groupToDelete && removeGroup.mutate(groupToDelete.id)}
-          title={removeGroup.isPending ? 'Excluindo…' : 'Excluir grupo'}
+          onPress={() => groupToDelete && scheduleDeletion(groupToDelete)}
+          title="Excluir grupo"
         />
       </ActionModal>
+      <Toast
+        actionLabel={pendingDeletion ? 'Desfazer' : undefined}
+        duration={pendingDeletion ? 5000 : 3000}
+        message={toastMessage ?? ''}
+        onAction={undoDeletion}
+        onDismiss={dismissToast}
+        showProgress={Boolean(pendingDeletion)}
+        variant={toastVariant}
+        visible={Boolean(toastMessage)}
+      />
     </View>
   );
 }
