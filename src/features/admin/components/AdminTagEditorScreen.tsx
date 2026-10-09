@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { getApiErrorMessage } from '@/api/client';
 import { ActionModal, ActionModalItem } from '@/components/ActionModal';
 import { AppBackButton } from '@/components/AppBackButton';
 import { TextField } from '@/components/TextField';
+import { Toast, type ToastVariant } from '@/components/Toast';
 import { isAdminAccount } from '@/features/admin/admin-access';
 import { adminApi, type AdminTag, type TagTargetType } from '@/features/admin/admin-api';
 import { useSessionStore } from '@/stores/session-store';
@@ -56,11 +57,16 @@ function TagForm({
   groups: Awaited<ReturnType<typeof adminApi.getTagGroups>>;
   tag?: AdminTag;
 }) {
+  const deletionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(() => formFromTag(tag));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [groupsVisible, setGroupsVisible] = useState(false);
+  const [pendingDeletion, setPendingDeletion] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<ToastVariant>('info');
   const selectedGroup = groups.find((group) => group.id === form.groupId);
   const save = useMutation({
     mutationFn: async () => {
@@ -98,12 +104,23 @@ function TagForm({
   });
   const remove = useMutation({
     mutationFn: () => adminApi.deleteTag(tag!.id),
-    onError: (error) => Alert.alert('Não foi possível excluir a tag', getApiErrorMessage(error)),
+    onError: (error) => {
+      setToastVariant('destructive');
+      setToastMessage(getApiErrorMessage(error));
+      setToastTimer();
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'tag-groups'] });
       router.dismissTo('/(app)/admin/tags');
     },
   });
+  useEffect(
+    () => () => {
+      if (deletionTimer.current) clearTimeout(deletionTimer.current);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
   const updateField = (field: Exclude<keyof FormState, 'targets'>, value: string) =>
     setForm((current) => ({ ...current, [field]: value }));
   const toggleTarget = (target: TagTargetType) =>
@@ -113,6 +130,35 @@ function TagForm({
         ? current.targets.filter((item) => item !== target)
         : [...current.targets, target],
     }));
+  function setToastTimer() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  }
+  function dismissToast() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMessage(null);
+  }
+  function scheduleDeletion() {
+    if (!tag) return;
+    if (deletionTimer.current) clearTimeout(deletionTimer.current);
+    setConfirmDelete(false);
+    setPendingDeletion(true);
+    setToastVariant('destructive');
+    setToastMessage('Tag será excluída.');
+    deletionTimer.current = setTimeout(() => {
+      setPendingDeletion(false);
+      setToastMessage('Excluindo tag...');
+      remove.mutate();
+    }, 5000);
+  }
+  function undoDeletion() {
+    if (!pendingDeletion) return;
+    if (deletionTimer.current) clearTimeout(deletionTimer.current);
+    setPendingDeletion(false);
+    setToastVariant('info');
+    setToastMessage('Exclusão desfeita.');
+    setToastTimer();
+  }
 
   return (
     <View style={styles.screen}>
@@ -161,8 +207,9 @@ function TagForm({
         ))}
       </ActionModal>
       <ActionModal description="Essa ação não pode ser desfeita." onClose={() => setConfirmDelete(false)} title="Excluir tag?" visible={confirmDelete}>
-        <ActionModalItem destructive disabled={remove.isPending} icon="trash-outline" onPress={() => remove.mutate()} title={remove.isPending ? 'Excluindo…' : 'Excluir tag'} />
+        <ActionModalItem destructive disabled={remove.isPending} icon="trash-outline" onPress={scheduleDeletion} title="Excluir tag" />
       </ActionModal>
+      <Toast actionLabel={pendingDeletion ? 'Desfazer' : undefined} duration={pendingDeletion ? 5000 : 3000} message={toastMessage ?? ''} onAction={undoDeletion} onDismiss={dismissToast} showProgress={pendingDeletion} variant={toastVariant} visible={Boolean(toastMessage)} />
     </View>
   );
 }
