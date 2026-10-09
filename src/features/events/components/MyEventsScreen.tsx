@@ -249,6 +249,7 @@ export function MyEventsScreen() {
       />
       <Toast
         actionLabel={pendingDeletion ? 'Desfazer' : undefined}
+        duration={pendingDeletion ? 5000 : 3000}
         message={toastMessage ?? ''}
         onAction={undoDeletion}
         visible={Boolean(toastMessage)}
